@@ -120,7 +120,7 @@
             </div>
 
             <!-- Game Area -->
-            <div class="w-[72%] relative overflow-hidden bg-[#075985]">
+            <div class="w-[72%] relative overflow-hidden bg-[url('FeedbackGameAssets/background%20texture.png')] bg-cover">
 
                 <canvas id="gameCanvas"></canvas>
 
@@ -165,15 +165,15 @@
 
                 <!-- Legend -->
                 <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
-                    <div class="bg-black/40 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
-                        <span class="text-white text-[10px] font-black uppercase opacity-60">מקרא:</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg">💎🐠</span>
-                            <span class="text-[10px] font-bold text-green-400">אוצר</span>
+                    <div class="bg-black/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 flex items-center gap-6 shadow-2xl">
+                        <span class="text-white text-[11px] font-black uppercase tracking-wider opacity-90">מקרא:</span>
+                        <div class="flex items-center gap-3">
+                            <img src="FeedbackGameAssets/TreasureChest-Legend.png" class="h-10 w-auto drop-shadow-md" alt="אוצר">
+                            <span class="text-[12px] font-black text-white drop-shadow-sm">אוצר</span>
                         </div>
-                        <div class="flex items-center gap-2 border-r border-white/20 pr-3">
-                            <span class="text-lg">🛢️💣</span>
-                            <span class="text-[10px] font-bold text-red-400">מכשול</span>
+                        <div class="flex items-center gap-3 border-r border-white/20 pr-6">
+                            <img src="FeedbackGameAssets/Bomb-Legend.png" class="h-10 w-auto drop-shadow-md" alt="מכשול">
+                            <span class="text-[12px] font-black text-white drop-shadow-sm">מכשול</span>
                         </div>
                     </div>
                 </div>
