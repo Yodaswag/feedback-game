@@ -5,63 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>האוצר של קפטן פידבק - המשימה הסופית</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap');
-        body { 
-            font-family: 'Assistant', sans-serif; 
-            background-color: #0f172a; 
-            height: 100dvh;
-            overflow: hidden;
-            margin: 0;
-        }
-        .wood-border { border: 6px solid #5e3a1a; }
-        .parchment { background-color: #f4ece1; }
-        canvas { 
-            background: linear-gradient(to bottom, #7dd3fc 0%, #38bdf8 40%, #0369a1 100%);
-            width: 100%;
-            height: 100%;
-        }
-        .type-card { transition: all 0.2s ease; cursor: pointer; border: 2px solid transparent; }
-        .type-card.active { border-color: #d69e2e; background-color: #feebc8; transform: scale(1.05); z-index: 10; }
-        
-        .feedback-bubble {
-            animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes slideInRight {
-            from { transform: translateX(120%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .check-item { transition: all 0.3s ease; border-right: 3px solid #cbd5e1; padding-right: 8px; }
-        .check-item.done { border-right-color: #059669; background-color: #ecfdf5; }
-        
-        .coin-pop { animation: coinPop 0.5s ease-out; }
-        @keyframes coinPop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.4); }
-            100% { transform: scale(1); }
-        }
-
-        .ship-bob { animation: bob 3s infinite ease-in-out; }
-        @keyframes bob {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .pulse-gold {
-            animation: pulse-gold 2s infinite;
-        }
-        @keyframes pulse-gold {
-            0% { box-shadow: 0 0 0 0 rgba(214, 158, 46, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(214, 158, 46, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(214, 158, 46, 0); }
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="flex items-center justify-center p-2">
 
     <div class="w-full h-full max-w-6xl max-h-[98vh] parchment wood-border rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-        
+
         <!-- Header -->
         <header class="bg-[#5e3a1a] text-[#f6ad55] p-3 shadow-lg flex justify-between items-center z-10 shrink-0">
             <div class="flex items-center gap-3">
@@ -73,7 +22,7 @@
                     <p class="text-[10px] text-white opacity-80 font-bold mt-1">השלימו את כל סוגי ההתנסויות כדי לנצח!</p>
                 </div>
             </div>
-            
+
             <div class="flex items-center gap-4 bg-black/30 px-5 py-1.5 rounded-full border border-white/20">
                 <span class="text-xs font-black text-[#f6ad55] uppercase tracking-wider">אוצר שנאסף:</span>
                 <div id="chestProgress" class="flex gap-1.5">
@@ -87,23 +36,23 @@
         </header>
 
         <div class="flex-grow flex overflow-hidden">
-            
+
             <!-- Sidebar (Expanded Layout) -->
             <div class="w-[28%] p-4 bg-[#e2d7c5] border-l-2 border-[#5e3a1a] flex flex-col gap-4 overflow-hidden shadow-inner shrink-0">
-                
+
                 <!-- Section 1: Feedback Selection -->
                 <div>
                     <h3 class="font-black text-[#5e3a1a] border-b-2 border-[#d69e2e] pb-1 mb-2 text-xs uppercase">1. בחרו סוג משוב:</h3>
                     <div class="grid grid-cols-1 gap-2">
-                        <div onclick="setFeedbackMode('outcome')" id="mode-outcome" class="type-card active bg-white p-2.5 rounded-xl shadow-md border-r-4 border-red-500">
+                        <div id="mode-outcome" class="type-card active bg-white p-2.5 rounded-xl shadow-md border-r-4 border-red-500">
                             <h4 class="font-bold text-xs">🔴 משוב תוצאה</h4>
                             <p class="text-[9px] opacity-70 font-bold leading-tight">רק "נכון" או "לא נכון".</p>
                         </div>
-                        <div onclick="setFeedbackMode('corrective')" id="mode-corrective" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-orange-500">
+                        <div id="mode-corrective" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-orange-500">
                             <h4 class="font-bold text-xs">🟠 משוב מתקן</h4>
                             <p class="text-[9px] opacity-70 font-bold leading-tight">ציון הטעות והתשובה הנכונה.</p>
                         </div>
-                        <div onclick="setFeedbackMode('elaborative')" id="mode-elaborative" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-green-500">
+                        <div id="mode-elaborative" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-green-500">
                             <h4 class="font-bold text-xs">🟢 משוב בונה</h4>
                             <p class="text-[9px] opacity-70 font-bold leading-tight">הסבר מעמיק ואסטרטגיה.</p>
                         </div>
@@ -115,7 +64,7 @@
                     <h3 class="font-black text-[#5e3a1a] border-b-2 border-[#d69e2e] pb-1 mb-2 text-xs uppercase">2. משימות לביצוע:</h3>
                     <div class="bg-white/60 rounded-2xl p-3 flex-grow overflow-y-auto space-y-2 border border-[#5e3a1a]/10 shadow-inner">
                         <div class="text-[10px] font-black text-slate-500 mb-1 italic">עליכם להתנסות בכל המצבים:</div>
-                        
+
                         <!-- Group Outcome -->
                         <div class="space-y-1">
                             <p class="text-[9px] font-black text-red-700 bg-red-50 px-2 py-0.5 rounded">במשוב תוצאה:</p>
@@ -123,6 +72,17 @@
                                 <span>הצלחת איסוף אוצר</span><span class="status-icon">⬜</span>
                             </div>
                             <div id="check-outcome-neg" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
+                                <span>פגיעה במכשול</span><span class="status-icon">⬜</span>
+                            </div>
+                        </div>
+
+                        <!-- Group Corrective -->
+                        <div class="space-y-1 mt-3">
+                            <p class="text-[9px] font-black text-orange-700 bg-orange-50 px-2 py-0.5 rounded">במשוב מתקן:</p>
+                            <div id="check-corrective-pos" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
+                                <span>הצלחת איסוף אוצר</span><span class="status-icon">⬜</span>
+                            </div>
+                            <div id="check-corrective-neg" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
                                 <span>פגיעה במכשול</span><span class="status-icon">⬜</span>
                             </div>
                         </div>
@@ -142,12 +102,12 @@
 
                 <!-- Section 3: Action Buttons -->
                 <div class="flex flex-col gap-2 pt-2">
-                    <button id="mainStartBtn" onclick="startGame()" class="bg-[#5e3a1a] hover:bg-black text-white font-black py-3 rounded-xl shadow-lg transition-all active:scale-95 text-xs uppercase">
+                    <button id="mainStartBtn" class="bg-[#5e3a1a] hover:bg-black text-white font-black py-3 rounded-xl shadow-lg transition-all active:scale-95 text-xs uppercase">
                         הנף מפרשים! ⚓
                     </button>
-                    
+
                     <!-- Final Mission Button (Appears only when checklist done) -->
-                    <button id="finishMissionBtn" onclick="showVictoryScreen()" class="hidden pulse-gold bg-[#d69e2e] hover:bg-[#b7791f] text-white font-black py-4 rounded-xl shadow-2xl transition-all scale-105 text-sm uppercase">
+                    <button id="finishMissionBtn" class="hidden pulse-gold bg-[#d69e2e] hover:bg-[#b7791f] text-white font-black py-4 rounded-xl shadow-2xl transition-all scale-105 text-sm uppercase">
                         סיום המשימה וקבלת האוצר 🏆
                     </button>
                 </div>
@@ -161,7 +121,7 @@
 
             <!-- Game Area -->
             <div class="w-[72%] relative overflow-hidden bg-[#075985]">
-                
+
                 <canvas id="gameCanvas"></canvas>
 
                 <!-- Start UI Overlay -->
@@ -172,7 +132,7 @@
                         <p class="max-w-xs opacity-90 text-sm mb-8 font-bold mx-auto leading-relaxed">
                             אספו אוצרות, התחמקו ממכשולים ושימו לב להבדל בסוגי המשובים שתקבלו.
                         </p>
-                        <button onclick="startGame()" class="px-12 py-4 bg-[#d69e2e] text-[#5e3a1a] rounded-full font-black text-lg shadow-[0_0_30px_rgba(214,158,46,0.4)] hover:scale-105 transition-transform uppercase">התחל הפלגה</button>
+                        <button id="overlayStartBtn" class="px-12 py-4 bg-[#d69e2e] text-[#5e3a1a] rounded-full font-black text-lg shadow-[0_0_30px_rgba(214,158,46,0.4)] hover:scale-105 transition-transform uppercase">התחל הפלגה</button>
                     </div>
                 </div>
 
@@ -185,7 +145,7 @@
                     <p class="text-md font-medium max-w-lg mb-10 opacity-90 italic">
                         שימו לב: משוב בונה (Elaborative) דורש יותר זמן לקריאה, אך הוא מספק את הכלים להשתפר באמת.
                     </p>
-                    <button onclick="location.reload()" class="px-12 py-4 bg-[#5e3a1a] text-white rounded-2xl font-black text-xl shadow-2xl hover:scale-105 transition-transform">שחקו שוב</button>
+                    <button id="playAgainBtn" class="px-12 py-4 bg-[#5e3a1a] text-white rounded-2xl font-black text-xl shadow-2xl hover:scale-105 transition-transform">שחקו שוב</button>
                 </div>
 
                 <!-- Feedback Bubble -->
@@ -200,11 +160,11 @@
                             <p id="fbText" class="text-[11px] font-bold text-slate-600 leading-relaxed"></p>
                         </div>
                     </div>
-                    <button onclick="closeFeedback()" class="mt-4 w-full bg-[#5e3a1a] hover:bg-black text-white py-2 rounded-xl font-black text-[10px] uppercase transition-all">המשך בהפלגה ➔</button>
+                    <button id="feedbackCloseBtn" class="mt-4 w-full bg-[#5e3a1a] hover:bg-black text-white py-2 rounded-xl font-black text-[10px] uppercase transition-all">המשך בהפלגה ➔</button>
                 </div>
 
                 <!-- Legend -->
-                <div class="absolute bottom-6 left-6 z-10 pointer-events-none">
+                <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
                     <div class="bg-black/40 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
                         <span class="text-white text-[10px] font-black uppercase opacity-60">מקרא:</span>
                         <div class="flex items-center gap-2">
@@ -217,253 +177,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Utility cluster (mute + speed) -->
+                <div class="utility-cluster">
+                    <button id="muteBtn" class="utility-btn mute-btn" type="button" aria-pressed="false" aria-label="השתק">🔊</button>
+                    <button id="speedBtn" class="utility-btn speed-btn" type="button" aria-pressed="false" aria-label="מהירות">⚡</button>
+                </div>
+                <div id="speedTray" class="speed-tray hidden">
+                    <span class="speed-symbol">⚡</span>
+                    <input id="speedSlider" type="range" min="0.5" max="3" step="0.1" value="1">
+                    <span id="speedValue">×1.0</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const feedbackBubble = document.getElementById('feedbackBubble');
-        const gameUI = document.getElementById('gameUI');
-        const winUI = document.getElementById('winUI');
-        const finishBtn = document.getElementById('finishMissionBtn');
-        const mainStartBtn = document.getElementById('mainStartBtn');
-        const progressContainer = document.getElementById('chestProgress');
-
-        let feedbackMode = 'outcome';
-        let itemsCollected = 0;
-        const GOAL = 5;
-        let isRunning = false;
-        let pirateY = 0;
-        let items = [];
-        let frame = 0;
-        let seaOffset = 0;
-        
-        let checklistProgress = {
-            outcome: { pos: false, neg: false },
-            elaborative: { pos: false, neg: false }
-        };
-
-        const modeData = {
-            outcome: { label: "משוב תוצאה", color: "#ef4444", text: "משוב תוצאה: המינימום הנדרש. רק לדעת אם פגעתם או פספסתם." },
-            corrective: { label: "משוב מתקן", color: "#f97316", text: "משוב מתקן: אומר לכם מה הטעות ומה היה צריך להיות במקום." },
-            elaborative: { label: "משוב בונה", color: "#22c55e", text: "משוב בונה: מסביר את ההיגיון ונותן אסטרטגיה שתעזור לכם לא לטעות שוב." }
-        };
-
-        function setFeedbackMode(mode) {
-            feedbackMode = mode;
-            document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`mode-${mode}`).classList.add('active');
-            document.getElementById('modeExplanation').innerText = modeData[mode].text;
-            feedbackBubble.classList.add('hidden');
-        }
-
-        function updateChecklist(mode, isPositive) {
-            const key = isPositive ? 'pos' : 'neg';
-            if (checklistProgress[mode] && !checklistProgress[mode][key]) {
-                checklistProgress[mode][key] = true;
-                const el = document.getElementById(`check-${mode}-${key}`);
-                if (el) {
-                    el.classList.add('done');
-                    el.querySelector('.status-icon').innerText = '✅';
-                }
-                checkMissionComplete();
-            }
-        }
-
-        function checkMissionComplete() {
-            const allDone = checklistProgress.outcome.pos && 
-                            checklistProgress.outcome.neg && 
-                            checklistProgress.elaborative.pos && 
-                            checklistProgress.elaborative.neg;
-            
-            if (allDone) {
-                finishBtn.classList.remove('hidden');
-                mainStartBtn.classList.add('hidden');
-            }
-        }
-
-        function showVictoryScreen() {
-            isRunning = false;
-            winUI.classList.remove('hidden');
-        }
-
-        function updateProgress() {
-            const coins = progressContainer.querySelectorAll('span');
-            for(let i = 0; i < GOAL; i++) {
-                if (i < itemsCollected) {
-                    coins[i].classList.remove('opacity-20', 'grayscale');
-                    coins[i].classList.add('opacity-100', 'coin-pop');
-                } else {
-                    coins[i].classList.add('opacity-20', 'grayscale');
-                    coins[i].classList.remove('coin-pop');
-                }
-            }
-        }
-
-        function resize() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-            pirateY = canvas.height / 2;
-        }
-
-        window.addEventListener('resize', resize);
-        resize();
-
-        function startGame() {
-            itemsCollected = 0;
-            updateProgress();
-            items = [];
-            isRunning = true;
-            gameUI.classList.add('hidden');
-            winUI.classList.add('hidden');
-            feedbackBubble.classList.add('hidden');
-        }
-
-        function createItem() {
-            const types = [
-                { id: 'treasure', icon: '💎', label: 'יהלום', isGood: true, hint: "חפצים נוצצים מעידים על אוצר יקר. חפש את הניצוץ!" },
-                { id: 'barrel', icon: '🛢️', label: 'חבית נפט', isGood: false, hint: "חביות נפט הן כהות ואטומות. הן פוגעות בסביבה הימית." },
-                { id: 'fish', icon: '🐠', label: 'דג זהב', isGood: true, hint: "דגים צהובים הם סימן למים בריאים. הם תמיד בחירה טובה." },
-                { id: 'mine', icon: '💣', label: 'מוקש ימי', isGood: false, hint: "מוקשים הם תמיד שחורים עם קוצים חדים. היזהר מצורות אלו!" }
-            ];
-            const type = types[Math.floor(Math.random() * types.length)];
-            items.push({
-                x: canvas.width + 100,
-                y: 100 + Math.random() * (canvas.height - 200),
-                speed: 1.8 + Math.random() * 1.5,
-                ...type
-            });
-        }
-
-        function drawSea() {
-            seaOffset -= 0.6;
-            if (seaOffset < -canvas.width) seaOffset = 0;
-            ctx.fillStyle = '#075985';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-            ctx.lineWidth = 2;
-            for (let j = 0; j < 6; j++) {
-                ctx.beginPath();
-                let yPos = (j * (canvas.height / 5.5));
-                for (let x = 0; x < canvas.width + 20; x += 20) {
-                    let y = yPos + Math.sin((x + seaOffset * 10) * 0.005 + j) * 12;
-                    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-            }
-        }
-
-        function drawShip() {
-            const shipX = 120;
-            const py = pirateY + Math.sin(frame * 0.04) * 6;
-            ctx.save();
-            ctx.translate(shipX, py);
-            
-            // Ship Hull
-            ctx.fillStyle = '#5e3a1a';
-            ctx.beginPath();
-            ctx.moveTo(-60, 0); ctx.lineTo(60, 0); ctx.lineTo(50, 35); ctx.lineTo(-50, 35);
-            ctx.closePath(); ctx.fill();
-            
-            // Captain
-            ctx.font = '50px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('👨‍✈️', 0, -20);
-            
-            ctx.restore();
-            return py;
-        }
-
-        function showFeedback(item) {
-            isRunning = false;
-            updateChecklist(feedbackMode, item.isGood);
-
-            let t = "", m = "", i = item.isGood ? "⭐" : "🚫";
-            const color = item.isGood ? "#22c55e" : "#ef4444";
-            const currentLabel = modeData[feedbackMode].label;
-
-            if (item.isGood) {
-                itemsCollected = Math.min(GOAL, itemsCollected + 1);
-                updateProgress();
-                if (feedbackMode === 'outcome') {
-                    t = "נכון!"; m = "הוספת אוצר לתיבה! הניקוד עלה.";
-                } else if (feedbackMode === 'corrective') {
-                    t = "מעולה!"; m = `נכון מאוד, אספת ${item.label}. פריט זה מועיל למסע.`;
-                } else {
-                    t = "בחירה חכמה!"; m = `זיהית נכון את ה${item.label}! ${item.hint} ההצלחה שלך נובעת מהבנת סימני הים.`;
-                }
-            } else {
-                itemsCollected = Math.max(0, itemsCollected - 1);
-                updateProgress();
-                if (feedbackMode === 'outcome') {
-                    t = "טעות!"; m = "זה לא אוצר. איבדת פריט מהתיבה.";
-                } else if (feedbackMode === 'corrective') {
-                    t = "זהירות!"; m = `טעות, פגעת ב${item.label}. זה מזיק למשימה שלך ומעכב אותך.`;
-                } else {
-                    t = "משוב לשיפור:"; m = `אופס, פגעת ב${item.label}. זכור: ${item.hint} שימוש בסימנים האלו יעזור לך להימנע מטעויות בעתיד.`;
-                }
-            }
-
-            document.getElementById('fbTitle').innerText = t;
-            document.getElementById('fbText').innerText = m;
-            document.getElementById('fbIcon').innerText = i;
-            document.getElementById('fbTag').innerText = currentLabel;
-            feedbackBubble.style.borderColor = color;
-            feedbackBubble.classList.remove('hidden');
-        }
-
-        function closeFeedback() {
-            feedbackBubble.classList.add('hidden');
-            isRunning = true;
-        }
-
-        canvas.addEventListener('mousemove', (e) => {
-            const r = canvas.getBoundingClientRect();
-            pirateY = e.clientY - r.top;
-            if (pirateY < 60) pirateY = 60;
-            if (pirateY > canvas.height - 60) pirateY = canvas.height - 60;
-        });
-
-        function gameLoop() {
-            frame++;
-            if (isRunning) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawSea();
-                const currentY = drawShip();
-                if (frame % 110 === 0) createItem();
-
-                for (let i = items.length - 1; i >= 0; i--) {
-                    const item = items[i];
-                    item.x -= item.speed;
-                    
-                    ctx.save();
-                    ctx.font = '36px Arial'; ctx.textAlign = 'center';
-                    ctx.fillText(item.icon, item.x, item.y);
-                    
-                    // Logic Indicator based on feedback mode
-                    ctx.fillStyle = 'white';
-                    ctx.beginPath(); ctx.arc(item.x + 20, item.y - 25, 9, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = 'black'; ctx.font = 'bold 10px Arial';
-                    const s = feedbackMode === 'outcome' ? '!' : (feedbackMode === 'corrective' ? '?' : '💡');
-                    ctx.fillText(s, item.x + 20, item.y - 21);
-                    ctx.restore();
-
-                    // Collision
-                    if (Math.abs(item.x - 120) < 60 && Math.abs(item.y - currentY) < 40) {
-                        showFeedback(item);
-                        items.splice(i, 1);
-                    }
-                    if (item.x < -100) items.splice(i, 1);
-                }
-            }
-            requestAnimationFrame(gameLoop);
-        }
-
-        window.onload = () => { 
-            setFeedbackMode('outcome'); 
-            gameLoop(); 
-        };
-    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
