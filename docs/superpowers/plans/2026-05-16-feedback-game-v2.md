@@ -31,7 +31,9 @@ Explains *why* the answer is right or wrong, articulates the underlying rule, an
 |-------|--------------|-----------------|-------------|---------------|
 | 1 | Outcome (✓/✗ only) | `chest-ribbon` (red ribbon) | `chest-plain` (no ribbon), `bomb-lit` | 3 consecutive `chest-ribbon` |
 | 2 | Corrective (names the error) | `bomb-unlit` (cold fuse) | `chest-green` (all green chests), `bomb-lit` | 3 consecutive `bomb-unlit` |
-| 3 | Constructive (explains why + strategy) | `chest-open` OR `bomb-unlit` | `chest-closed`, `bomb-lit` | 3 consecutive correct (either `chest-open` or `bomb-unlit`) |
+| 3 | Constructive (explains why + strategy) | `chest-ribbon` when Y < WATERLINE_Y **OR** `bomb-unlit` when Y ≥ WATERLINE_Y | same items in wrong zone + `bomb-lit` | 3 consecutive correct |
+
+**Level 3 design rationale:** Player recognises both items from previous levels but position now determines correctness. With outcome feedback this looks completely random (same chest → ✓ or ✗ depending on where it appears). With constructive feedback one sentence unlocks the full mental model: "above the waterline = chest, below = bomb." This is the "aha" moment that only constructive feedback delivers.
 
 **Counter rule:** Any wrong item collected (or `bomb-lit` collision) resets consecutive count to 0. Correct item = count +1. Items that scroll past without collision do NOT affect the counter.
 
@@ -47,13 +49,11 @@ Place all PNGs in `assets/` before starting development. These are the exact fil
 |---|---|---|
 | `water-bg.png` | feedback-game | Scrolling water background |
 | `ship.png` | feedback-game | Player pirate ship |
-| `chest-ribbon.png` | feedback-game | Level 1: red ribbon = SAFE (collect) |
+| `chest-ribbon.png` | feedback-game | Level 1 + 3: red ribbon chest (safe above waterline in L3) |
 | `chest-plain.png` | feedback-game (variant) | Level 1: no ribbon = TRAP (avoid) |
 | `chest-green.png` | feedback-game (variant) | Level 2: green = ALL DANGEROUS (avoid) |
-| `chest-open.png` | feedback-game (variant) | Level 3: open lid = SAFE (collect) |
-| `chest-closed.png` | feedback-game (variant) | Level 3: closed lid = DANGEROUS (avoid) |
 | `bomb-lit.png` | feedback-game | All levels: lit fuse = DANGEROUS (avoid) |
-| `bomb-unlit.png` | feedback-game (variant) | Levels 2+3: cold fuse = SAFE (collect) |
+| `bomb-unlit.png` | feedback-game (variant) | Levels 2+3: cold fuse (safe below waterline in L3) |
 | `pirate-happy.png` | hook-game | Transition screen emotion |
 | `pirate-neutral.png` | hook-game | Transition screen emotion |
 | `pirate-frustrated.png` | hook-game | Transition screen emotion |
@@ -191,6 +191,10 @@ export const ITEM_SPAWN_INTERVAL = 1800; // ms between spawns
 
 export const CONSECUTIVE_TO_WIN = 3;
 
+// Level 3: items above this Y are in the "above waterline" zone (chest-ribbon safe)
+// Items at or below this Y are in the "below waterline" zone (bomb-unlit safe)
+export const WATERLINE_Y = 300;
+
 // Popup display durations per feedback type (ms)
 export const POPUP_DURATION = {
   outcome: 1300,
@@ -202,8 +206,6 @@ export const ITEM = Object.freeze({
   CHEST_RIBBON: 'chest-ribbon',
   CHEST_PLAIN:  'chest-plain',
   CHEST_GREEN:  'chest-green',
-  CHEST_OPEN:   'chest-open',
-  CHEST_CLOSED: 'chest-closed',
   BOMB_LIT:     'bomb-lit',
   BOMB_UNLIT:   'bomb-unlit',
 });
@@ -241,9 +243,13 @@ git commit -m "feat: add game constants"
 
 ```js
 // tests/levels.test.mjs
+// isCorrect(item) and isHazard(item) receive full item objects { type, x, y, width, height }
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import LEVELS from '../js/levels.js';
+import { WATERLINE_Y } from '../js/constants.js';
+
+const item = (type, y = 200) => ({ type, x: 400, y, width: 58, height: 58 });
 
 test('LEVELS has exactly 3 entries', () => {
   assert.equal(LEVELS.length, 3);
@@ -251,71 +257,106 @@ test('LEVELS has exactly 3 entries', () => {
 
 // Level 0 — Outcome
 test('level 0: chest-ribbon is correct', () => {
-  assert.equal(LEVELS[0].isCorrect('chest-ribbon'), true);
+  assert.equal(LEVELS[0].isCorrect(item('chest-ribbon')), true);
 });
 test('level 0: chest-plain is not correct', () => {
-  assert.equal(LEVELS[0].isCorrect('chest-plain'), false);
+  assert.equal(LEVELS[0].isCorrect(item('chest-plain')), false);
 });
 test('level 0: bomb-lit is a hazard', () => {
-  assert.equal(LEVELS[0].isHazard('bomb-lit'), true);
+  assert.equal(LEVELS[0].isHazard(item('bomb-lit')), true);
 });
 test('level 0: correct feedback is ✓', () => {
-  assert.equal(LEVELS[0].getFeedbackText('chest-ribbon', true), '✓');
+  assert.equal(LEVELS[0].getFeedbackText(item('chest-ribbon'), true), '✓');
 });
 test('level 0: wrong feedback is ✗', () => {
-  assert.equal(LEVELS[0].getFeedbackText('chest-plain', false), '✗');
+  assert.equal(LEVELS[0].getFeedbackText(item('chest-plain'), false), '✗');
+});
+test('level 0: has non-empty revealCardText', () => {
+  assert.ok(LEVELS[0].revealCardText.length > 30);
 });
 
 // Level 1 — Corrective
 test('level 1: bomb-unlit is correct', () => {
-  assert.equal(LEVELS[1].isCorrect('bomb-unlit'), true);
+  assert.equal(LEVELS[1].isCorrect(item('bomb-unlit')), true);
 });
 test('level 1: chest-green is not correct', () => {
-  assert.equal(LEVELS[1].isCorrect('chest-green'), false);
+  assert.equal(LEVELS[1].isCorrect(item('chest-green')), false);
 });
 test('level 1: bomb-lit is a hazard', () => {
-  assert.equal(LEVELS[1].isHazard('bomb-lit'), true);
+  assert.equal(LEVELS[1].isHazard(item('bomb-lit')), true);
 });
-test('level 1: chest-green is not a hazard (hazard = bomb-lit only)', () => {
-  assert.equal(LEVELS[1].isHazard('chest-green'), false);
+test('level 1: chest-green is not a hazard', () => {
+  assert.equal(LEVELS[1].isHazard(item('chest-green')), false);
 });
 test('level 1: correct feedback names the item', () => {
-  const text = LEVELS[1].getFeedbackText('bomb-unlit', true);
+  const text = LEVELS[1].getFeedbackText(item('bomb-unlit'), true);
   assert.ok(text.includes('כבויה'), `expected "כבויה" in "${text}"`);
 });
 test('level 1: wrong chest-green feedback names the chest', () => {
-  const text = LEVELS[1].getFeedbackText('chest-green', false);
+  const text = LEVELS[1].getFeedbackText(item('chest-green'), false);
   assert.ok(text.includes('ירוק'), `expected "ירוק" in "${text}"`);
 });
 test('level 1: wrong bomb-lit feedback names the bomb', () => {
-  const text = LEVELS[1].getFeedbackText('bomb-lit', false);
+  const text = LEVELS[1].getFeedbackText(item('bomb-lit'), false);
   assert.ok(text.includes('דולקת'), `expected "דולקת" in "${text}"`);
 });
+test('level 1: has non-empty revealCardText', () => {
+  assert.ok(LEVELS[1].revealCardText.length > 30);
+});
 
-// Level 2 — Constructive
-test('level 2: chest-open is correct', () => {
-  assert.equal(LEVELS[2].isCorrect('chest-open'), true);
+// Level 2 — Constructive (positional rule)
+test('level 2: chest-ribbon ABOVE waterline is correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('chest-ribbon', WATERLINE_Y - 1)), true);
 });
-test('level 2: bomb-unlit is correct', () => {
-  assert.equal(LEVELS[2].isCorrect('bomb-unlit'), true);
+test('level 2: chest-ribbon BELOW waterline is NOT correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('chest-ribbon', WATERLINE_Y + 1)), false);
 });
-test('level 2: chest-closed is not correct', () => {
-  assert.equal(LEVELS[2].isCorrect('chest-closed'), false);
+test('level 2: chest-ribbon AT waterline is NOT correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('chest-ribbon', WATERLINE_Y)), false);
 });
-test('level 2: bomb-lit is a hazard', () => {
-  assert.equal(LEVELS[2].isHazard('bomb-lit'), true);
+test('level 2: bomb-unlit BELOW waterline is correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('bomb-unlit', WATERLINE_Y + 1)), true);
 });
-test('level 2: chest-open feedback explains the rule', () => {
-  const text = LEVELS[2].getFeedbackText('chest-open', true);
+test('level 2: bomb-unlit AT waterline is correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('bomb-unlit', WATERLINE_Y)), true);
+});
+test('level 2: bomb-unlit ABOVE waterline is NOT correct', () => {
+  assert.equal(LEVELS[2].isCorrect(item('bomb-unlit', WATERLINE_Y - 1)), false);
+});
+test('level 2: bomb-lit is a hazard regardless of position', () => {
+  assert.equal(LEVELS[2].isHazard(item('bomb-lit', 100)), true);
+  assert.equal(LEVELS[2].isHazard(item('bomb-lit', 500)), true);
+});
+test('level 2: correct chest-ribbon feedback mentions waterline and gives rule', () => {
+  const text = LEVELS[2].getFeedbackText(item('chest-ribbon', 100), true);
   assert.ok(text.length > 30, 'constructive feedback should be long');
-  assert.ok(text.includes('פתוח'), `expected "פתוח" in "${text}"`);
+  assert.ok(text.includes('קו המים') || text.includes('עליון') || text.includes('צף'),
+    `expected waterline reference in "${text}"`);
+  assert.ok(text.includes('כלל') || text.includes('חפש'),
+    'should include strategy hint');
 });
-test('level 2: chest-closed feedback explains why and gives strategy', () => {
-  const text = LEVELS[2].getFeedbackText('chest-closed', false);
-  assert.ok(text.includes('סגור'), `expected "סגור" in "${text}"`);
-  assert.ok(text.includes('כלל') || text.includes('זכור') || text.includes('חפש'),
-    'constructive feedback should include strategy hint');
+test('level 2: wrong chest-ribbon feedback explains position error and rule', () => {
+  const text = LEVELS[2].getFeedbackText(item('chest-ribbon', 400), false);
+  assert.ok(text.includes('קו המים') || text.includes('תחתון') || text.includes('מתחת'),
+    `expected below-waterline reference in "${text}"`);
+  assert.ok(text.includes('כלל') || text.includes('מעל'),
+    'should redirect player to correct zone');
 });
+test('level 2: correct bomb-unlit feedback explains position and rule', () => {
+  const text = LEVELS[2].getFeedbackText(item('bomb-unlit', 400), true);
+  assert.ok(text.includes('קו המים') || text.includes('תחתון') || text.includes('מתחת'),
+    `expected below-waterline reference in "${text}"`);
+});
+test('level 2: wrong bomb-unlit feedback explains position error', () => {
+  const text = LEVELS[2].getFeedbackText(item('bomb-unlit', 100), false);
+  assert.ok(text.includes('קו המים') || text.includes('עליון') || text.includes('מעל'),
+    `expected above-waterline reference in "${text}"`);
+});
+test('level 2: has non-empty revealCardText', () => {
+  assert.ok(LEVELS[2].revealCardText.length > 30);
+});
+
+// All levels
 test('each level has a non-empty transitionReveal', () => {
   for (const level of LEVELS) {
     assert.ok(level.transitionReveal.length > 0, `level ${level.index} transitionReveal is empty`);
@@ -324,6 +365,12 @@ test('each level has a non-empty transitionReveal', () => {
 test('each level has exactly 4 moodOptions', () => {
   for (const level of LEVELS) {
     assert.equal(level.moodOptions.length, 4, `level ${level.index} needs 4 mood options`);
+  }
+});
+test('each level has a non-empty revealCardText', () => {
+  for (const level of LEVELS) {
+    assert.ok(level.revealCardText && level.revealCardText.length > 30,
+      `level ${level.index} revealCardText missing or too short`);
   }
 });
 ```
@@ -341,7 +388,9 @@ Expected: `Cannot find module '../js/levels.js'`
 
 ```js
 // js/levels.js
-import { ITEM } from './constants.js';
+// isCorrect(item) and isHazard(item) receive the full item object { type, x, y, ... }
+// Level 0 and 1 ignore item.y. Level 2 uses item.y for the positional rule.
+import { ITEM, WATERLINE_Y } from './constants.js';
 
 const LEVELS = [
   {
@@ -350,20 +399,27 @@ const LEVELS = [
     feedbackTypeName: 'משוב תוצאה',
     feedbackTypeNameEn: 'Outcome Feedback',
     feedbackTypeDesc: 'נכון או לא נכון — ללא שום הסבר.',
+    // Large tattered-page card text shown on the REVEAL transition screen after this level
+    revealCardText:
+      '🏴‍☠️ סיימת שלב 1!\n\n' +
+      'משוב תוצאה (Outcome Feedback)\n' +
+      'רק ✓ או ✗ — ללא שום הסבר.\n\n' +
+      'כמו קפטן שאומר "כן!" או "לא!" — בלי להגיד לך למה.\n\n' +
+      'כמה ניסיונות לקח לך? זו בדיוק התחושה של תלמיד שמקבל רק נכון/לא נכון ללא הסבר — ניסוי וטעייה בלבד.',
     spawnPool: [
       { type: ITEM.CHEST_RIBBON, weight: 3 },
       { type: ITEM.CHEST_PLAIN,  weight: 3 },
       { type: ITEM.BOMB_LIT,     weight: 2 },
     ],
-    isCorrect(type) { return type === ITEM.CHEST_RIBBON; },
-    isHazard(type)  { return type === ITEM.BOMB_LIT; },
-    getFeedbackText(_type, correct) { return correct ? '✓' : '✗'; },
+    isCorrect(item) { return item.type === ITEM.CHEST_RIBBON; },
+    isHazard(item)  { return item.type === ITEM.BOMB_LIT; },
+    getFeedbackText(_item, correct) { return correct ? '✓' : '✗'; },
     transitionReveal:
       'הכלל היה: ארגז עם סרט אדום = בטוח לאסוף. ארגז ללא סרט = מלכודת. פצצה דולקת = סכנה.',
     pirateTransitionMood: 'frustrated',
     moodQuestion: 'איך הרגשת?',
     moodOptions: ['מתוסכל 😤', 'מבולבל 😕', 'בסדר 😐', 'מרוצה 😊'],
-    nextLevelIntro: 'בשלב הבא תקבל הסבר קצר על מה שטעית.',
+    nextLevelIntro: 'בשלב הבא תקבל הסבר על מה שטעית.',
   },
   {
     index: 1,
@@ -371,17 +427,23 @@ const LEVELS = [
     feedbackTypeName: 'משוב מתקן',
     feedbackTypeNameEn: 'Corrective Feedback',
     feedbackTypeDesc: 'מסביר מה היה שגוי — אבל לא למה.',
+    revealCardText:
+      '🔧 סיימת שלב 2!\n\n' +
+      'משוב מתקן (Corrective Feedback)\n' +
+      'מסביר מה שגוי — אבל לא את הכלל המלא.\n\n' +
+      'כמו קפטן שאומר: "זו הייתה פצצה דולקת!" — מועיל יותר, אבל עדיין לא נותן לך אסטרטגיה.\n\n' +
+      'הרגשת את ההבדל? קצת פחות תסכול, אבל עדיין קשה לדעת מה לעשות בפעם הבאה.',
     spawnPool: [
       { type: ITEM.CHEST_GREEN, weight: 3 },
       { type: ITEM.BOMB_LIT,    weight: 2 },
       { type: ITEM.BOMB_UNLIT,  weight: 3 },
     ],
-    isCorrect(type) { return type === ITEM.BOMB_UNLIT; },
-    isHazard(type)  { return type === ITEM.BOMB_LIT; },
-    getFeedbackText(type, correct) {
-      if (correct)                    return 'נכון! פצצה כבויה — בטוח לאסוף.';
-      if (type === ITEM.CHEST_GREEN)  return 'שגיאה! ארגז ירוק — מלכודת.';
-      if (type === ITEM.BOMB_LIT)     return 'שגיאה! פצצה דולקת — מסוכנת!';
+    isCorrect(item) { return item.type === ITEM.BOMB_UNLIT; },
+    isHazard(item)  { return item.type === ITEM.BOMB_LIT; },
+    getFeedbackText(item, correct) {
+      if (correct)                          return 'נכון! פצצה כבויה — בטוח לאסוף.';
+      if (item.type === ITEM.CHEST_GREEN)   return 'שגיאה! ארגז ירוק — מלכודת.';
+      if (item.type === ITEM.BOMB_LIT)      return 'שגיאה! פצצה דולקת — מסוכנת!';
       return 'שגיאה!';
     },
     transitionReveal:
@@ -397,29 +459,42 @@ const LEVELS = [
     feedbackTypeName: 'משוב בונה',
     feedbackTypeNameEn: 'Constructive Feedback',
     feedbackTypeDesc: 'מסביר למה ונותן אסטרטגיה לפעם הבאה.',
+    revealCardText:
+      '⚓ סיימת שלב 3!\n\n' +
+      'משוב בונה (Constructive Feedback)\n' +
+      'מסביר למה, נותן לך את הכלל ואסטרטגיה לפעם הבאה.\n\n' +
+      'כמו קפטן שנותן לך את מפת האוצר המלאה — פתאום הכל הגיוני!\n\n' +
+      'הרגשת את ה"אהה!"? זו בדיוק המטרה של משוב בונה — להפוך כאוס לבהירות.',
+    // Rule: chest-ribbon is safe ONLY above the waterline (item.y < WATERLINE_Y)
+    //       bomb-unlit is safe ONLY below the waterline (item.y >= WATERLINE_Y)
+    //       bomb-lit is always a hazard
+    // Both item types are FAMILIAR from previous levels — position is the NEW signal.
     spawnPool: [
-      { type: ITEM.CHEST_OPEN,   weight: 2 },
-      { type: ITEM.CHEST_CLOSED, weight: 2 },
+      { type: ITEM.CHEST_RIBBON, weight: 3 },
+      { type: ITEM.BOMB_UNLIT,   weight: 3 },
       { type: ITEM.BOMB_LIT,     weight: 2 },
-      { type: ITEM.BOMB_UNLIT,   weight: 2 },
     ],
-    isCorrect(type) {
-      return type === ITEM.CHEST_OPEN || type === ITEM.BOMB_UNLIT;
+    isCorrect(item) {
+      if (item.type === ITEM.CHEST_RIBBON) return item.y < WATERLINE_Y;
+      if (item.type === ITEM.BOMB_UNLIT)   return item.y >= WATERLINE_Y;
+      return false;
     },
-    isHazard(type) { return type === ITEM.BOMB_LIT; },
-    getFeedbackText(type, _correct) {
-      if (type === ITEM.CHEST_OPEN)
-        return 'מצוין! ארגז פתוח — האוצר גלוי = אמיתי. כלל: ארגז עם מכסה פתוח תמיד בטוח!';
-      if (type === ITEM.CHEST_CLOSED)
-        return 'טעות! ארגז סגור מסתיר מה שבפנים. זכור: רק ארגז פתוח בטוח — חפש את המכסה הפתוח!';
-      if (type === ITEM.BOMB_UNLIT)
-        return 'נהדר! פצצה עם פתיל קר — לא דולקת = בטוחה. כלל: חפש פתיל ללא אש!';
-      if (type === ITEM.BOMB_LIT)
-        return 'טעות! פצצה דולקת — הפתיל בוער = מתפוצצת! רק פצצות עם פתיל קר בטוחות לאיסוף.';
+    isHazard(item) { return item.type === ITEM.BOMB_LIT; },
+    getFeedbackText(item, correct) {
+      if (item.type === ITEM.CHEST_RIBBON && correct)
+        return 'מצוין! ארגז מעל קו המים — כלל: ארגז צף מעל = אוצר אמיתי. חפש ארגזים בחצי העליון!';
+      if (item.type === ITEM.CHEST_RIBBON && !correct)
+        return 'טעות! הארגז היה מתחת לקו המים — שם הוא מלכודת. כלל: ארגז מעל קו המים בלבד!';
+      if (item.type === ITEM.BOMB_UNLIT && correct)
+        return 'נהדר! פצצה כבויה מתחת לקו המים — שם היא בטוחה לאיסוף. כלל: פצצה בחצי התחתון = בטוח!';
+      if (item.type === ITEM.BOMB_UNLIT && !correct)
+        return 'טעות! הפצצה הייתה מעל קו המים — שם היא מסוכנת. כלל: פצצה כבויה רק בחצי התחתון!';
+      if (item.type === ITEM.BOMB_LIT)
+        return 'טעות! פצצה דולקת — תמיד מסוכנת, בכל מקום! הימנע מפצצות דולקות.';
       return '';
     },
     transitionReveal:
-      'הכלל היה: ארגז פתוח = בטוח. ארגז סגור = מלכודת. פצצה כבויה = בטוח לאסוף. פצצה דולקת = סכנה.',
+      'הכלל היה: מעל קו המים — ארגז בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, ארגז מלכודת. המיקום קובע הכל!',
     pirateTransitionMood: 'happy',
     moodQuestion: 'איך הרגשת לעומת השלבים הקודמים?',
     moodOptions: ['לא שינה כלום 😑', 'קצת יותר טוב 😐', 'הרבה יותר טוב 🙂', 'זה היה כיף! 😄'],
@@ -852,8 +927,6 @@ const IMAGE_PATHS = [
   'chest-ribbon',
   'chest-plain',
   'chest-green',
-  'chest-open',
-  'chest-closed',
   'bomb-lit',
   'bomb-unlit',
   'pirate-happy',
@@ -1110,7 +1183,7 @@ No unit tests — visual output. Verify manually when main.js is wired up (Task 
 
 ```js
 // js/renderer.js
-import { CANVAS_SIZE, SHIP_X, CONSECUTIVE_TO_WIN } from './constants.js';
+import { CANVAS_SIZE, SHIP_X, CONSECUTIVE_TO_WIN, WATERLINE_Y } from './constants.js';
 
 export function drawBackground(ctx, images) {
   if (images['water-bg']) {
@@ -1140,13 +1213,11 @@ export function drawItems(ctx, images, items) {
     } else {
       // Fallback color-coded rectangles during development
       const colors = {
-        'chest-ribbon':  '#DAA520',
-        'chest-plain':   '#8B6914',
-        'chest-green':   '#228B22',
-        'chest-open':    '#FFD700',
-        'chest-closed':  '#A0522D',
-        'bomb-lit':      '#DC143C',
-        'bomb-unlit':    '#708090',
+        'chest-ribbon': '#DAA520',
+        'chest-plain':  '#8B6914',
+        'chest-green':  '#228B22',
+        'bomb-lit':     '#DC143C',
+        'bomb-unlit':   '#708090',
       };
       ctx.fillStyle = colors[item.type] ?? '#888';
       ctx.fillRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
@@ -1178,6 +1249,21 @@ export function drawCounter(ctx, count) {
       ctx.fillText('★', x + slotSize / 2, y + slotSize / 2);
     }
   }
+}
+
+// Draws the waterline separator — only called during level 3 (levelIndex === 2)
+// A subtle horizontal line with labels so player can orient but rule is NOT spelled out
+export function drawWaterline(ctx) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([12, 8]);
+  ctx.beginPath();
+  ctx.moveTo(0, WATERLINE_Y);
+  ctx.lineTo(CANVAS_SIZE, WATERLINE_Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
 }
 
 // Level badge at top-right
@@ -1389,38 +1475,57 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 export function drawRevealScreen(ctx, images, level) {
   activeButtons = [];
 
-  const px = 40, py = 60, pw = CANVAS_SIZE - 80, ph = CANVAS_SIZE - 120;
-  drawPanel(ctx, px, py, pw, ph);
+  const px = 50, py = 40, pw = CANVAS_SIZE - 100, ph = CANVAS_SIZE - 100;
 
-  // Feedback type label
-  ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 22px Arial';
+  // Tattered page as the card background
+  const page = images['tattered-page'];
+  if (page) {
+    ctx.drawImage(page, px, py, pw, ph);
+  } else {
+    ctx.fillStyle = '#f5e6c8';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = '#8B6914';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(px, py, pw, ph);
+  }
+
+  // Dark tint overlay so text is readable over any page texture
+  ctx.fillStyle = 'rgba(30,15,5,0.45)';
+  ctx.fillRect(px, py, pw, ph);
+
+  // revealCardText — multi-line, drawn from level data
+  // Lines starting with a single emoji char are treated as headers
+  const lines = level.revealCardText.split('\n');
+  let lineY = py + 30;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText(`שלב הסתיים! סוג המשוב: ${level.feedbackTypeName}`, CANVAS_SIZE / 2, py + 24);
+  for (const line of lines) {
+    if (line.trim() === '') { lineY += 10; continue; }
+    const isHeader = /^[^ -]/.test(line) && line.length < 40;
+    if (isHeader) {
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 17px Arial';
+    } else {
+      ctx.fillStyle = '#f0e8d0';
+      ctx.font = '14px Arial';
+    }
+    lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, pw - 60, 21);
+  }
 
-  // Feedback type description
-  ctx.fillStyle = '#cce';
-  ctx.font = '15px Arial';
-  ctx.fillText(level.feedbackTypeDesc, CANVAS_SIZE / 2, py + 62);
-
-  // Divider
-  ctx.strokeStyle = 'rgba(255,220,100,0.3)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(px + 30, py + 90); ctx.lineTo(px + pw - 30, py + 90);
-  ctx.stroke();
-
-  // Rule reveal
-  ctx.fillStyle = '#FFF';
-  ctx.font = 'bold 14px Arial';
-  ctx.fillText('הכלל שהיה בשלב זה:', CANVAS_SIZE / 2, py + 104);
-  ctx.font = '14px Arial';
+  // Rule reveal box
+  const ruleY = py + ph - 110;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(px + 10, ruleY, pw - 20, 52);
   ctx.fillStyle = '#adf';
-  wrapText(ctx, level.transitionReveal, CANVAS_SIZE / 2, py + 128, pw - 80, 22);
+  ctx.font = 'bold 12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('הכלל שהיה בשלב זה:', CANVAS_SIZE / 2, ruleY + 8);
+  ctx.font = '12px Arial';
+  ctx.fillStyle = '#fff';
+  wrapText(ctx, level.transitionReveal, CANVAS_SIZE / 2, ruleY + 26, pw - 40, 18);
 
   // Continue button
-  drawButton(ctx, 'המשך ←', CANVAS_SIZE / 2 - 70, py + ph - 58, 140, 42, true);
+  drawButton(ctx, 'המשך ←', CANVAS_SIZE / 2 - 70, py + ph - 50, 140, 40, true);
 }
 
 export function drawMoodScreen(ctx, images, level, selectedMood) {
@@ -1452,44 +1557,79 @@ export function drawMoodScreen(ctx, images, level, selectedMood) {
   });
 }
 
+// END_CARD_TEXT is the educational takeaway shown on the closing tattered-page card.
+// Pirate-themed but pedagogically grounded. Displayed over tattered-page.png background.
+const END_CARD_TEXT = [
+  '🏴‍☠️ סיימתם את המסע!',
+  '',
+  'האם תדמיינו לנסות לפענח את כלל שלב 3',
+  'עם משוב תוצאה בלבד? 😰',
+  '',
+  'הכללים שהתלמידים שלנו מתמודדים איתם',
+  'בחיים האמיתיים הם לרוב מורכבים —',
+  'קשה לפענח אותם בניסוי וטעייה.',
+  '',
+  'משוב בונה בלמידה מבוססת משחק',
+  'הוא לא נחמד — הוא הכרחי!',
+  '',
+  'השתמשו בו כדי לייצר חוויות',
+  'לימוד משמעותיות ומרתקות. ⚓',
+];
+
 export function drawEndScreen(ctx, images, levelResults) {
   activeButtons = [];
 
-  const px = 40, py = 40, pw = CANVAS_SIZE - 80, ph = CANVAS_SIZE - 80;
-  drawPanel(ctx, px, py, pw, ph);
+  const px = 40, py = 30, pw = CANVAS_SIZE - 80, ph = CANVAS_SIZE - 70;
 
-  // Happy pirate
-  drawPirate(ctx, images, 'happy', CANVAS_SIZE / 2, py + 80, 100);
+  // Tattered page background
+  const page = images['tattered-page'];
+  if (page) {
+    ctx.drawImage(page, px, py, pw, ph);
+  } else {
+    ctx.fillStyle = '#f5e6c8';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeStyle = '#8B6914';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(px, py, pw, ph);
+  }
+  ctx.fillStyle = 'rgba(20,10,5,0.5)';
+  ctx.fillRect(px, py, pw, ph);
 
-  ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 22px Arial';
+  // Happy pirate top-right
+  drawPirate(ctx, images, 'happy', px + pw - 55, py + 55, 90);
+
+  // Educational text
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText('סיימתם את כל השלבים! 🏴‍☠️', CANVAS_SIZE / 2, py + 146);
+  let lineY = py + 22;
+  for (const line of END_CARD_TEXT) {
+    if (line === '') { lineY += 8; continue; }
+    const isBold = line.startsWith('משוב בונה') || line.startsWith('🏴');
+    ctx.fillStyle = isBold ? '#FFD700' : '#f0e8d0';
+    ctx.font = isBold ? 'bold 16px Arial' : '14px Arial';
+    lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, pw - 120, 20);
+  }
 
-  ctx.fillStyle = '#FFF';
-  ctx.font = '14px Arial';
-  ctx.fillText('ניסיתם 3 סוגי משוב:', CANVAS_SIZE / 2, py + 180);
-
-  const summaries = [
-    { name: 'משוב תוצאה', desc: 'נכון/לא נכון בלבד' },
-    { name: 'משוב מתקן', desc: 'מסביר מה שגוי' },
-    { name: 'משוב בונה', desc: 'מסביר למה ונותן אסטרטגיה' },
-  ];
-  summaries.forEach((s, i) => {
+  // Level mood summary strip
+  const stripY = py + ph - 110;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(px + 6, stripY, pw - 12, 64);
+  const summaries = ['משוב תוצאה', 'משוב מתקן', 'משוב בונה'];
+  summaries.forEach((name, i) => {
     const mood = levelResults[i]?.mood ?? '—';
+    const sx = px + 16 + i * ((pw - 32) / 3);
+    const sw = (pw - 32) / 3 - 6;
     ctx.fillStyle = '#adf';
-    ctx.font = 'bold 13px Arial';
-    ctx.fillText(`שלב ${i + 1}: ${s.name}`, CANVAS_SIZE / 2, py + 210 + i * 52);
-    ctx.fillStyle = '#FFF';
-    ctx.font = '12px Arial';
-    ctx.fillText(s.desc, CANVAS_SIZE / 2, py + 228 + i * 52);
+    ctx.font = 'bold 11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, sx + sw / 2, stripY + 8);
     ctx.fillStyle = '#FFD700';
-    ctx.fillText(`הרגשת: ${mood}`, CANVAS_SIZE / 2, py + 244 + i * 52);
+    ctx.font = '11px Arial';
+    ctx.fillText(mood, sx + sw / 2, stripY + 26);
   });
 
   // Restart button
-  drawButton(ctx, 'שחק שוב', CANVAS_SIZE / 2 - 60, py + ph - 58, 120, 42, true);
+  drawButton(ctx, 'שחק שוב', CANVAS_SIZE / 2 - 60, py + ph - 38, 120, 34, true);
 }
 
 // ─── Click handler ────────────────────────────────────────────────────────────
@@ -1569,11 +1709,11 @@ function update(deltaMs) {
     const ship = { x: SHIP_X, y: state.shipY, width: SHIP_WIDTH, height: SHIP_HEIGHT };
     for (const item of state.items) {
       if (checkCollision(ship, item)) {
-        const correct = level.isCorrect(item.type);
-        const hazard  = level.isHazard(item.type);
-        // Hazard = always wrong. Wrong chest = collected but incorrect.
+        const correct = level.isCorrect(item);   // full item — level 3 needs item.y
+        const hazard  = level.isHazard(item);
+        // Hazard = always wrong. Wrong zone or wrong type = incorrect.
         const isCorrect = correct && !hazard;
-        const text = level.getFeedbackText(item.type, correct);
+        const text = level.getFeedbackText(item, correct);
         const duration = POPUP_DURATION[level.feedbackType];
 
         state = State.collectItem(state, item.id, isCorrect);
@@ -1602,6 +1742,7 @@ function render() {
     case PHASE.PLAYING:
     case PHASE.FEEDBACK:
       Renderer.drawBackground(ctx, Assets.images);
+      if (state.levelIndex === 2) Renderer.drawWaterline(ctx); // level 3 positional cue
       Renderer.drawShip(ctx, Assets.images, state.shipY);
       Renderer.drawItems(ctx, Assets.images, state.items);
       Renderer.drawCounter(ctx, state.consecutiveCount);
@@ -1776,14 +1917,17 @@ git commit -m "feat: complete feedback-game-v2 — 3-level feedback progression 
 
 ## Appendix: Feedback Text Reference
 
-| Level | Item | Correct? | Text shown in popup |
-|---|---|---|---|
-| 1 (Outcome) | any | ✓ | `✓` |
-| 1 (Outcome) | any | ✗ | `✗` |
-| 2 (Corrective) | bomb-unlit | ✓ | `נכון! פצצה כבויה — בטוח לאסוף.` |
-| 2 (Corrective) | chest-green | ✗ | `שגיאה! ארגז ירוק — מלכודת.` |
-| 2 (Corrective) | bomb-lit | ✗ | `שגיאה! פצצה דולקת — מסוכנת!` |
-| 3 (Constructive) | chest-open | ✓ | `מצוין! ארגז פתוח — האוצר גלוי = אמיתי. כלל: ארגז עם מכסה פתוח תמיד בטוח!` |
-| 3 (Constructive) | chest-closed | ✗ | `טעות! ארגז סגור מסתיר מה שבפנים. זכור: רק ארגז פתוח בטוח — חפש את המכסה הפתוח!` |
-| 3 (Constructive) | bomb-unlit | ✓ | `נהדר! פצצה עם פתיל קר — לא דולקת = בטוחה. כלל: חפש פתיל ללא אש!` |
-| 3 (Constructive) | bomb-lit | ✗ | `טעות! פצצה דולקת — הפתיל בוער = מתפוצצת! רק פצצות עם פתיל קר בטוחות לאיסוף.` |
+| Level | Item | Position | Correct? | Text shown in popup |
+|---|---|---|---|---|
+| 1 (Outcome) | any | any | ✓ | `✓` |
+| 1 (Outcome) | any | any | ✗ | `✗` |
+| 2 (Corrective) | bomb-unlit | any | ✓ | `נכון! פצצה כבויה — בטוח לאסוף.` |
+| 2 (Corrective) | chest-green | any | ✗ | `שגיאה! ארגז ירוק — מלכודת.` |
+| 2 (Corrective) | bomb-lit | any | ✗ | `שגיאה! פצצה דולקת — מסוכנת!` |
+| 3 (Constructive) | chest-ribbon | Y < 300 (above) | ✓ | `מצוין! ארגז מעל קו המים — כלל: ארגז צף מעל = אוצר אמיתי. חפש ארגזים בחצי העליון!` |
+| 3 (Constructive) | chest-ribbon | Y ≥ 300 (below) | ✗ | `טעות! הארגז היה מתחת לקו המים — שם הוא מלכודת. כלל: ארגז מעל קו המים בלבד!` |
+| 3 (Constructive) | bomb-unlit | Y ≥ 300 (below) | ✓ | `נהדר! פצצה כבויה מתחת לקו המים — שם היא בטוחה לאיסוף. כלל: פצצה בחצי התחתון = בטוח!` |
+| 3 (Constructive) | bomb-unlit | Y < 300 (above) | ✗ | `טעות! הפצצה הייתה מעל קו המים — שם היא מסוכנת. כלל: פצצה כבויה רק בחצי התחתון!` |
+| 3 (Constructive) | bomb-lit | any | ✗ | `טעות! פצצה דולקת — תמיד מסוכנת, בכל מקום! הימנע מפצצות דולקות.` |
+
+**Level 3 rule summary:** The SAME items from previous levels appear, but position relative to `WATERLINE_Y = 300` determines correctness. This is the "aha" moment — constructive feedback explains the full two-variable rule in one sentence.
