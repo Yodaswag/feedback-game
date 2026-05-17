@@ -2,23 +2,20 @@ import { CANVAS_SIZE, TRANSITION_STEP } from './constants.js';
 
 let activeButtons = [];
 
-function drawPanel(ctx, x, y, w, h) {
-  ctx.fillStyle = 'rgba(10,20,50,0.82)';
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, 16);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,220,100,0.5)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-}
+const FONT = (size, bold = false) => `${bold ? 'bold ' : ''}${size}px 'Rubik', Arial, sans-serif`;
+const BLUE_DARK = '#1a3f6f';
+const BLUE_MID  = '#2d6b9e';
 
 function drawButton(ctx, label, x, y, w, h, highlight) {
-  ctx.fillStyle = highlight ? '#FFD700' : 'rgba(255,255,255,0.15)';
+  ctx.fillStyle = highlight ? BLUE_MID : 'rgba(45,107,158,0.18)';
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 10);
   ctx.fill();
-  ctx.fillStyle = highlight ? '#1a1a2e' : '#FFF';
-  ctx.font = 'bold 14px Arial';
+  ctx.strokeStyle = BLUE_MID;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = highlight ? '#fff' : BLUE_DARK;
+  ctx.font = FONT(14, true);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + w / 2, y + h / 2);
@@ -33,7 +30,7 @@ function drawPirate(ctx, images, mood, cx, cy, size) {
     ctx.fillStyle = '#DDD';
     ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
     ctx.fillStyle = '#333';
-    ctx.font = `${size * 0.5}px serif`;
+    ctx.font = FONT(size * 0.5);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const emoji = { happy: '😄', bored: '😐', frustrated: '😤', confused: '😕' }[mood] ?? '🏴‍☠️';
@@ -59,10 +56,47 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   return lineY + lineHeight;
 }
 
+function countWrapLines(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  let line = '';
+  let count = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      count++;
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) count++;
+  return count;
+}
+
 export function drawRevealScreen(ctx, images, level) {
   activeButtons = [];
 
-  const px = 50, py = 40, pw = CANVAS_SIZE - 100, ph = CANVAS_SIZE - 100;
+  const px = 50, pw = CANVAS_SIZE - 100;
+  // Inset 14% from each horizontal edge of the page image — keeps text on visible paper
+  const hInset = Math.round(pw * 0.14);
+  const textMaxW = pw - hInset * 2;
+  const textCX = px + pw / 2; // center x of page (= CANVAS_SIZE/2)
+
+  // Measure content height before drawing so the card fits the text
+  const lines = level.revealCardText.split('\n');
+  let contentH = 0;
+  for (const line of lines) {
+    if (line.trim() === '') { contentH += 10; continue; }
+    const isHeader = /^[^ -]/.test(line) && line.length < 40;
+    ctx.font = FONT(isHeader ? 17 : 14, isHeader);
+    contentH += countWrapLines(ctx, line, textMaxW) * 21;
+  }
+  const ph = contentH + 200; // 200 = top+bottom insets + rule + button
+  const py = Math.max(30, Math.floor((CANVAS_SIZE - ph) / 2));
+
+  // Vertical insets as % of ph to stay on visible paper
+  const vInsetTop = Math.round(ph * 0.12);
+  const vInsetBot = Math.round(ph * 0.10);
 
   const page = images['tattered-page'];
   if (page) {
@@ -75,65 +109,34 @@ export function drawRevealScreen(ctx, images, level) {
     ctx.strokeRect(px, py, pw, ph);
   }
 
-  ctx.fillStyle = 'rgba(30,15,5,0.45)';
-  ctx.fillRect(px, py, pw, ph);
-
-  const lines = level.revealCardText.split('\n');
-  let lineY = py + 30;
+  let lineY = py + vInsetTop;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   for (const line of lines) {
     if (line.trim() === '') { lineY += 10; continue; }
     const isHeader = /^[^ -]/.test(line) && line.length < 40;
     if (isHeader) {
-      ctx.fillStyle = '#FFD700';
-      ctx.font = 'bold 17px Arial';
+      ctx.fillStyle = BLUE_DARK;
+      ctx.font = FONT(17, true);
     } else {
-      ctx.fillStyle = '#f0e8d0';
-      ctx.font = '14px Arial';
+      ctx.fillStyle = BLUE_MID;
+      ctx.font = FONT(14);
     }
-    lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, pw - 60, 21);
+    lineY = wrapText(ctx, line, textCX, lineY, textMaxW, 21);
   }
 
-  const ruleY = py + ph - 110;
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(px + 10, ruleY, pw - 20, 52);
-  ctx.fillStyle = '#adf';
-  ctx.font = 'bold 12px Arial';
+  const ruleY = py + ph - vInsetBot - 90;
+  ctx.fillStyle = BLUE_DARK;
+  ctx.font = FONT(12, true);
   ctx.textAlign = 'center';
-  ctx.fillText('הכלל שהיה בשלב זה:', CANVAS_SIZE / 2, ruleY + 8);
-  ctx.font = '12px Arial';
-  ctx.fillStyle = '#fff';
-  wrapText(ctx, level.transitionReveal, CANVAS_SIZE / 2, ruleY + 26, pw - 40, 18);
+  ctx.fillText('הכלל שהיה בשלב זה:', textCX, ruleY);
+  ctx.font = FONT(12);
+  ctx.fillStyle = BLUE_MID;
+  wrapText(ctx, level.transitionReveal, textCX, ruleY + 18, textMaxW, 18);
 
-  drawButton(ctx, 'המשך ←', CANVAS_SIZE / 2 - 70, py + ph - 50, 140, 40, true);
+  drawButton(ctx, 'המשך ←', textCX - 70, py + ph - vInsetBot - 44, 140, 40, true);
 }
 
-export function drawMoodScreen(ctx, images, level, selectedMood) {
-  activeButtons = [];
-
-  const px = 40, py = 60, pw = CANVAS_SIZE - 80, ph = CANVAS_SIZE - 120;
-  drawPanel(ctx, px, py, pw, ph);
-
-  drawPirate(ctx, images, level.pirateTransitionMood, CANVAS_SIZE / 2, py + 100, 120);
-
-  ctx.fillStyle = '#FFD700';
-  ctx.font = 'bold 18px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(level.moodQuestion, CANVAS_SIZE / 2, py + 174);
-
-  const btnW = 120, btnH = 44, gap = 12;
-  const gridW = 2 * btnW + gap;
-  const startX = (CANVAS_SIZE - gridW) / 2;
-  level.moodOptions.forEach((opt, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const bx = startX + col * (btnW + gap);
-    const by = py + 210 + row * (btnH + gap);
-    drawButton(ctx, opt, bx, by, btnW, btnH, opt === selectedMood);
-  });
-}
 
 const END_CARD_TEXT = [
   '🏴‍☠️ סיימתם את המסע!',
@@ -167,8 +170,6 @@ export function drawEndScreen(ctx, images, levelResults) {
     ctx.lineWidth = 3;
     ctx.strokeRect(px, py, pw, ph);
   }
-  ctx.fillStyle = 'rgba(20,10,5,0.5)';
-  ctx.fillRect(px, py, pw, ph);
 
   drawPirate(ctx, images, 'happy', px + pw - 55, py + 55, 90);
 
@@ -178,25 +179,23 @@ export function drawEndScreen(ctx, images, levelResults) {
   for (const line of END_CARD_TEXT) {
     if (line === '') { lineY += 8; continue; }
     const isBold = line.startsWith('משוב בונה') || line.startsWith('🏴');
-    ctx.fillStyle = isBold ? '#FFD700' : '#f0e8d0';
-    ctx.font = isBold ? 'bold 16px Arial' : '14px Arial';
+    ctx.fillStyle = isBold ? BLUE_DARK : BLUE_MID;
+    ctx.font = isBold ? FONT(16, true) : FONT(14);
     lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, pw - 120, 20);
   }
 
   const stripY = py + ph - 110;
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(px + 6, stripY, pw - 12, 64);
   const summaries = ['משוב תוצאה', 'משוב מתקן', 'משוב בונה'];
   summaries.forEach((name, i) => {
     const mood = levelResults[i]?.mood ?? '—';
     const sx = px + 16 + i * ((pw - 32) / 3);
     const sw = (pw - 32) / 3 - 6;
-    ctx.fillStyle = '#adf';
-    ctx.font = 'bold 11px Arial';
+    ctx.fillStyle = BLUE_DARK;
+    ctx.font = FONT(11, true);
     ctx.textAlign = 'center';
     ctx.fillText(name, sx + sw / 2, stripY + 8);
-    ctx.fillStyle = '#FFD700';
-    ctx.font = '11px Arial';
+    ctx.fillStyle = BLUE_MID;
+    ctx.font = FONT(11);
     ctx.fillText(mood, sx + sw / 2, stripY + 26);
   });
 

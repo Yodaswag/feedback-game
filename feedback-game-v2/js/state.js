@@ -21,7 +21,8 @@ export function startGame(state) {
 }
 
 export function moveShip(state, dy) {
-  const newY = Math.max(40, Math.min(560, state.shipY + dy));
+  // Constrain ship to water strip (WATER_Y_TOP + margin → canvas bottom - margin)
+  const newY = Math.max(140, Math.min(555, state.shipY + dy));
   return { ...state, shipY: newY };
 }
 

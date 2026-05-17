@@ -20,12 +20,10 @@ const LEVELS = [
     ],
     isCorrect(item) { return item.type === ITEM.CHEST_RIBBON; },
     isHazard(item)  { return item.type === ITEM.BOMB_LIT; },
-    getFeedbackText(_item, correct) { return correct ? '✓' : '✗'; },
+    getFeedbackText(_item, correct) { return correct ? 'נכון' : 'לא נכון'; },
     transitionReveal:
       'הכלל היה: ארגז עם סרט אדום = בטוח לאסוף. ארגז ללא סרט = מלכודת. פצצה דולקת = סכנה.',
-    pirateTransitionMood: 'frustrated',
     moodQuestion: 'איך הרגשת?',
-    moodOptions: ['מתוסכל 😤', 'מבולבל 😕', 'בסדר 😐', 'מרוצה 😊'],
     nextLevelIntro: 'בשלב הבא תקבל הסבר על מה שטעית.',
   },
   {
@@ -55,9 +53,7 @@ const LEVELS = [
     },
     transitionReveal:
       'הכלל היה: כל הארגזים הירוקים מסוכנים. פצצות דולקות — סכנה. פצצות כבויות — בטוח לאסוף.',
-    pirateTransitionMood: 'bored',
     moodQuestion: 'איך הרגשת לעומת השלב הקודם?',
-    moodOptions: ['עדיין מתוסכל 😤', 'קצת יותר טוב 😐', 'הרבה יותר טוב 🙂', 'מרוצה 😊'],
     nextLevelIntro: 'בשלב הבא תקבל הסבר מלא — כולל למה ואיך להצליח.',
   },
   {
@@ -98,9 +94,7 @@ const LEVELS = [
     },
     transitionReveal:
       'הכלל היה: מעל קו המים — ארגז בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, ארגז מלכודת. המיקום קובע הכל!',
-    pirateTransitionMood: 'happy',
     moodQuestion: 'איך הרגשת לעומת השלבים הקודמים?',
-    moodOptions: ['לא שינה כלום 😑', 'קצת יותר טוב 😐', 'הרבה יותר טוב 🙂', 'זה היה כיף! 😄'],
     nextLevelIntro: null,
   },
 ];

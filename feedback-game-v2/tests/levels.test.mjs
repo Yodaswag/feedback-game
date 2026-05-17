@@ -20,11 +20,11 @@ test('level 0: chest-plain is not correct', () => {
 test('level 0: bomb-lit is a hazard', () => {
   assert.equal(LEVELS[0].isHazard(item('bomb-lit')), true);
 });
-test('level 0: correct feedback is ✓', () => {
-  assert.equal(LEVELS[0].getFeedbackText(item('chest-ribbon'), true), '✓');
+test('level 0: correct feedback is נכון', () => {
+  assert.equal(LEVELS[0].getFeedbackText(item('chest-ribbon'), true), 'נכון');
 });
-test('level 0: wrong feedback is ✗', () => {
-  assert.equal(LEVELS[0].getFeedbackText(item('chest-plain'), false), '✗');
+test('level 0: wrong feedback is לא נכון', () => {
+  assert.equal(LEVELS[0].getFeedbackText(item('chest-plain'), false), 'לא נכון');
 });
 test('level 0: has non-empty revealCardText', () => {
   assert.ok(LEVELS[0].revealCardText.length > 30);

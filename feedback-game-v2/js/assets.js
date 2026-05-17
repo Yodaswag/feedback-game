@@ -1,5 +1,6 @@
 const IMAGE_PATHS = [
   'water-bg',
+  'background-texture',
   'ship',
   'chest-ribbon',
   'chest-plain',
@@ -11,6 +12,7 @@ const IMAGE_PATHS = [
   'pirate-frustrated',
   'pirate-confused',
   'tattered-page',
+  'logo',
 ];
 
 export const images = {};

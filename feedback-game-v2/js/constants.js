@@ -1,12 +1,16 @@
 export const CANVAS_SIZE = 600;
 
+// Water strip: background-texture fills canvas, water-bg drawn on top from this Y down
+export const WATER_Y_TOP = 80;
+
 export const SHIP_X = 90;
-export const SHIP_WIDTH = 80;
-export const SHIP_HEIGHT = 60;
+export const SHIP_WIDTH = 60;   // hitbox
+export const SHIP_HEIGHT = 45;  // hitbox
 export const SHIP_SPEED = 5;
 
-export const ITEM_WIDTH = 58;
-export const ITEM_HEIGHT = 58;
+export const ITEM_WIDTH = 109;
+export const ITEM_HEIGHT = 109;
+export const ITEM_HITBOX_RATIO = 0.65; // collision box is 65% of visual size
 export const ITEM_SPEED = 2.8;
 export const ITEM_SPAWN_INTERVAL = 1800;
 
