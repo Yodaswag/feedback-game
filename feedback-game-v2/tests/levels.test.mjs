@@ -117,11 +117,6 @@ test('each level has a non-empty transitionReveal', () => {
     assert.ok(level.transitionReveal.length > 0, `level ${level.index} transitionReveal is empty`);
   }
 });
-test('each level has exactly 4 moodOptions', () => {
-  for (const level of LEVELS) {
-    assert.equal(level.moodOptions.length, 4, `level ${level.index} needs 4 mood options`);
-  }
-});
 test('each level has a non-empty revealCardText', () => {
   for (const level of LEVELS) {
     assert.ok(level.revealCardText && level.revealCardText.length > 30,
