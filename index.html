@@ -1,197 +1,44 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>האוצר של קפטן פידבק - המשימה הסופית</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הפלגת המשובים</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex items-center justify-center p-2">
-
-    <div class="w-full h-full max-w-6xl max-h-[98vh] parchment wood-border rounded-3xl shadow-2xl flex flex-col overflow-hidden">
-
-        <!-- Header -->
-        <header class="bg-[#5e3a1a] text-[#f6ad55] p-3 shadow-lg flex justify-between items-center z-10 shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="bg-[#d69e2e] p-1.5 rounded-full shadow-inner">
-                    <img src="https://img.icons8.com/color/48/000000/pirate.png" class="h-8 w-8" alt="Captain">
-                </div>
-                <div>
-                    <h1 class="text-xl font-black leading-none text-white">🏴‍☠️ האוצר של קפטן פידבק</h1>
-                    <p class="text-[10px] text-white opacity-80 font-bold mt-1">השלימו את כל סוגי ההתנסויות כדי לנצח!</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4 bg-black/30 px-5 py-1.5 rounded-full border border-white/20">
-                <span class="text-xs font-black text-[#f6ad55] uppercase tracking-wider">אוצר שנאסף:</span>
-                <div id="chestProgress" class="flex gap-1.5">
-                    <span class="opacity-20 text-2xl filter grayscale">💰</span>
-                    <span class="opacity-20 text-2xl filter grayscale">💰</span>
-                    <span class="opacity-20 text-2xl filter grayscale">💰</span>
-                    <span class="opacity-20 text-2xl filter grayscale">💰</span>
-                    <span class="opacity-20 text-2xl filter grayscale">💰</span>
-                </div>
-            </div>
-        </header>
-
-        <div class="flex-grow flex overflow-hidden">
-
-            <!-- Sidebar (Expanded Layout) -->
-            <div class="w-[28%] p-4 bg-[#e2d7c5] border-l-2 border-[#5e3a1a] flex flex-col gap-4 overflow-hidden shadow-inner shrink-0">
-
-                <!-- Section 1: Feedback Selection -->
-                <div>
-                    <h3 class="font-black text-[#5e3a1a] border-b-2 border-[#d69e2e] pb-1 mb-2 text-xs uppercase">1. בחרו סוג משוב:</h3>
-                    <div class="grid grid-cols-1 gap-2">
-                        <div id="mode-outcome" class="type-card active bg-white p-2.5 rounded-xl shadow-md border-r-4 border-red-500">
-                            <h4 class="font-bold text-xs">🔴 משוב תוצאה</h4>
-                            <p class="text-[9px] opacity-70 font-bold leading-tight">רק "נכון" או "לא נכון".</p>
-                        </div>
-                        <div id="mode-corrective" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-orange-500">
-                            <h4 class="font-bold text-xs">🟠 משוב מתקן</h4>
-                            <p class="text-[9px] opacity-70 font-bold leading-tight">ציון הטעות והתשובה הנכונה.</p>
-                        </div>
-                        <div id="mode-elaborative" class="type-card bg-white p-2.5 rounded-xl shadow-md border-r-4 border-green-500">
-                            <h4 class="font-bold text-xs">🟢 משוב בונה</h4>
-                            <p class="text-[9px] opacity-70 font-bold leading-tight">הסבר מעמיק ואסטרטגיה.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Interactive Checklist (The "Between" Part) -->
-                <div class="flex-grow flex flex-col min-h-0">
-                    <h3 class="font-black text-[#5e3a1a] border-b-2 border-[#d69e2e] pb-1 mb-2 text-xs uppercase">2. משימות לביצוע:</h3>
-                    <div class="bg-white/60 rounded-2xl p-3 flex-grow overflow-y-auto space-y-2 border border-[#5e3a1a]/10 shadow-inner">
-                        <div class="text-[10px] font-black text-slate-500 mb-1 italic">עליכם להתנסות בכל המצבים:</div>
-
-                        <!-- Group Outcome -->
-                        <div class="space-y-1">
-                            <p class="text-[9px] font-black text-red-700 bg-red-50 px-2 py-0.5 rounded">במשוב תוצאה:</p>
-                            <div id="check-outcome-pos" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>הצלחת איסוף אוצר</span><span class="status-icon">⬜</span>
-                            </div>
-                            <div id="check-outcome-neg" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>פגיעה במכשול</span><span class="status-icon">⬜</span>
-                            </div>
-                        </div>
-
-                        <!-- Group Corrective -->
-                        <div class="space-y-1 mt-3">
-                            <p class="text-[9px] font-black text-orange-700 bg-orange-50 px-2 py-0.5 rounded">במשוב מתקן:</p>
-                            <div id="check-corrective-pos" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>הצלחת איסוף אוצר</span><span class="status-icon">⬜</span>
-                            </div>
-                            <div id="check-corrective-neg" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>פגיעה במכשול</span><span class="status-icon">⬜</span>
-                            </div>
-                        </div>
-
-                        <!-- Group Elaborative -->
-                        <div class="space-y-1 mt-3">
-                            <p class="text-[9px] font-black text-green-700 bg-green-50 px-2 py-0.5 rounded">במשוב בונה:</p>
-                            <div id="check-elaborative-pos" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>הצלחת איסוף אוצר</span><span class="status-icon">⬜</span>
-                            </div>
-                            <div id="check-elaborative-neg" class="check-item flex items-center justify-between gap-2 p-1.5 rounded-lg text-[10px] font-bold bg-white/50">
-                                <span>פגיעה במכשול</span><span class="status-icon">⬜</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Action Buttons -->
-                <div class="flex flex-col gap-2 pt-2">
-                    <button id="mainStartBtn" class="bg-[#5e3a1a] hover:bg-black text-white font-black py-3 rounded-xl shadow-lg transition-all active:scale-95 text-xs uppercase">
-                        הנף מפרשים! ⚓
-                    </button>
-
-                    <!-- Final Mission Button (Appears only when checklist done) -->
-                    <button id="finishMissionBtn" class="hidden pulse-gold bg-[#d69e2e] hover:bg-[#b7791f] text-white font-black py-4 rounded-xl shadow-2xl transition-all scale-105 text-sm uppercase">
-                        סיום המשימה וקבלת האוצר 🏆
-                    </button>
-                </div>
-
-                <div class="bg-white/40 p-2 rounded border border-black/5">
-                    <p id="modeExplanation" class="text-[9px] leading-tight text-slate-700 font-bold italic">
-                        משוב תוצאה: המינימום הנדרש. רק לדעת אם פגעתם או פספסתם.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Game Area -->
-            <div class="w-[72%] relative overflow-hidden bg-[url('FeedbackGameAssets/background%20texture.png')] bg-cover">
-
-                <canvas id="gameCanvas"></canvas>
-
-                <!-- Start UI Overlay -->
-                <div id="gameUI" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/80 text-white text-center p-6 transition-all duration-500">
-                    <div id="uiMain" class="ship-bob">
-                        <img src="https://img.icons8.com/color/144/000000/treasure-chest.png" class="mx-auto mb-4">
-                        <h2 class="text-3xl font-black text-[#fbd38d] mb-2 uppercase tracking-wide">משימת האוצר</h2>
-                        <p class="max-w-xs opacity-90 text-sm mb-8 font-bold mx-auto leading-relaxed">
-                            אספו אוצרות, התחמקו ממכשולים ושימו לב להבדל בסוגי המשובים שתקבלו.
-                        </p>
-                        <button id="overlayStartBtn" class="px-12 py-4 bg-[#d69e2e] text-[#5e3a1a] rounded-full font-black text-lg shadow-[0_0_30px_rgba(214,158,46,0.4)] hover:scale-105 transition-transform uppercase">התחל הפלגה</button>
-                    </div>
-                </div>
-
-                <!-- Victory UI Overlay -->
-                <div id="winUI" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-yellow-500/95 text-[#5e3a1a] text-center p-8">
-                    <h2 class="text-6xl font-black mb-6 drop-shadow-lg">כל הכבוד! 🏆</h2>
-                    <p class="text-xl font-bold max-w-lg mb-4 leading-relaxed">
-                        השלמתם את כל סוגי ההתנסויות ומילאתם את התיבה!
-                    </p>
-                    <p class="text-md font-medium max-w-lg mb-10 opacity-90 italic">
-                        שימו לב: משוב בונה (Elaborative) דורש יותר זמן לקריאה, אך הוא מספק את הכלים להשתפר באמת.
-                    </p>
-                    <button id="playAgainBtn" class="px-12 py-4 bg-[#5e3a1a] text-white rounded-2xl font-black text-xl shadow-2xl hover:scale-105 transition-transform">שחקו שוב</button>
-                </div>
-
-                <!-- Feedback Bubble -->
-                <div id="feedbackBubble" class="hidden absolute right-6 top-6 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] p-5 border-r-[12px] z-40 feedback-bubble">
-                    <div class="flex items-start gap-4">
-                        <div id="fbIcon" class="text-5xl"></div>
-                        <div class="flex-grow">
-                            <div class="flex justify-between items-start mb-1">
-                                <h4 id="fbTitle" class="font-black text-md text-[#5e3a1a]"></h4>
-                                <span id="fbTag" class="text-[8px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200 uppercase"></span>
-                            </div>
-                            <p id="fbText" class="text-[11px] font-bold text-slate-600 leading-relaxed"></p>
-                        </div>
-                    </div>
-                    <button id="feedbackCloseBtn" class="mt-4 w-full bg-[#5e3a1a] hover:bg-black text-white py-2 rounded-xl font-black text-[10px] uppercase transition-all">המשך בהפלגה ➔</button>
-                </div>
-
-                <!-- Legend -->
-                <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
-                    <div class="bg-black/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 flex items-center gap-6 shadow-2xl">
-                        <span class="text-white text-[11px] font-black uppercase tracking-wider opacity-90">מקרא:</span>
-                        <div class="flex items-center gap-3">
-                            <img src="FeedbackGameAssets/TreasureChest-Legend.png" class="h-10 w-auto drop-shadow-md" alt="אוצר">
-                            <span class="text-[12px] font-black text-white drop-shadow-sm">אוצר</span>
-                        </div>
-                        <div class="flex items-center gap-3 border-r border-white/20 pr-6">
-                            <img src="FeedbackGameAssets/Bomb-Legend.png" class="h-10 w-auto drop-shadow-md" alt="מכשול">
-                            <span class="text-[12px] font-black text-white drop-shadow-sm">מכשול</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Utility cluster (mute + speed) -->
-                <div class="utility-cluster">
-                    <button id="muteBtn" class="utility-btn mute-btn" type="button" aria-pressed="false" aria-label="השתק">🔊</button>
-                    <button id="speedBtn" class="utility-btn speed-btn" type="button" aria-pressed="false" aria-label="מהירות">⚡</button>
-                </div>
-                <div id="speedTray" class="speed-tray hidden">
-                    <span class="speed-symbol">⚡</span>
-                    <input id="speedSlider" type="range" min="0.5" max="3" step="0.1" value="1">
-                    <span id="speedValue">×1.0</span>
-                </div>
-            </div>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game-canvas" width="600" height="600"></canvas>
+    <div id="mood-overlay" class="ui-layer hidden">
+      <div class="ui-box screen-center ui-overlay">
+        <h2 id="mood-title" class="title-lg"></h2>
+        <p id="mood-question" class="text-body"></p>
+        <div class="emoji-row">
+          <button class="emoji-btn face-choice" type="button" data-val="5" aria-label="מתרגש מאוד">
+            <img class="face-img" src="assets/5-very-happy-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="4" aria-label="שמח">
+            <img class="face-img" src="assets/4-happy-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="3" aria-label="נייטרלי">
+            <img class="face-img" src="assets/3-neutral-bored-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="2" aria-label="לא בטוח">
+            <img class="face-img" src="assets/2-slightly-frustrated-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="1" aria-label="מתוסכל">
+            <img class="face-img" src="assets/1-frustrated-pirate.png" alt="">
+          </button>
         </div>
+        <div class="selected-display">בחרת: <span id="mood-selected-display"></span></div>
+        <button id="mood-submit-btn" class="btn btn-blue" disabled>המשך</button>
+      </div>
     </div>
-
-    <script type="module" src="js/main.js"></script>
+  </div>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

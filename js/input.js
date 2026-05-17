@@ -1,25 +1,18 @@
-export const SHIP_X = 120;
-export const CONTROL_LANE_WIDTH = 90;
-export const SHIP_PADDING = 60;
+const held = new Set();
 
-export function clampShipY(y, canvasHeight) {
-  return Math.max(SHIP_PADDING, Math.min(canvasHeight - SHIP_PADDING, y));
+export function onKeyDown(e) {
+  held.add(e.key);
 }
 
-export function shouldTrackMouse(mouseX, controlLaneWidth = CONTROL_LANE_WIDTH) {
-  return mouseX > controlLaneWidth;
+export function onKeyUp(e) {
+  held.delete(e.key);
 }
 
-export function resolveShipY({
-  currentY,
-  mouseY,
-  keyboardDirection,
-  dt,
-  speed,
-  canvasHeight,
-}) {
-  if (keyboardDirection !== 0) {
-    return clampShipY(currentY + keyboardDirection * speed * dt, canvasHeight);
-  }
-  return clampShipY(mouseY ?? currentY, canvasHeight);
+// Returns -1 (up), +1 (down), or 0 (no vertical movement)
+export function getShipDelta() {
+  const up   = held.has('ArrowUp')   || held.has('w') || held.has('W');
+  const down = held.has('ArrowDown') || held.has('s') || held.has('S');
+  if (up && !down) return -1;
+  if (down && !up) return 1;
+  return 0;
 }
