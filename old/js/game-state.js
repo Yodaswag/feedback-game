@@ -5,7 +5,7 @@ export const MAX_SPEED = 3;
 
 export function createInitialState() {
   return {
-    feedbackMode: 'outcome',
+    feedbackMode: null,
     itemsCollected: 0,
     speedMultiplier: 1,
     checklist: {

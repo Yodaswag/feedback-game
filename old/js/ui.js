@@ -1,18 +1,13 @@
 export function updateChecklist(checklist) {
   for (const [mode, entries] of Object.entries(checklist)) {
     for (const [key, done] of Object.entries(entries)) {
-      const el = document.getElementById(`check-${mode}-${key}`);
+      const el = document.getElementById(`mode-${mode}-${key}`);
       if (!el) continue;
-      el.classList.toggle('done', done);
+      el.classList.toggle('is-complete', done);
+      el.classList.toggle('is-pending', !done);
       el.querySelector('.status-icon').textContent = done ? '✅' : '⬜';
     }
   }
-}
-
-export function updateProgress(count, goal) {
-  document.querySelectorAll('#chestProgress span').forEach((el, index) => {
-    el.classList.toggle('active', index < count);
-  });
 }
 
 export function wireUtilityControls({ onSpeedChange, onMuteToggle }) {

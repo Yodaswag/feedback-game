@@ -5,7 +5,6 @@ import {
   setFeedbackMode,
   setSpeedMultiplier,
   isMissionComplete,
-  GOAL,
 } from './game-state.js';
 import {
   SHIP_X,
@@ -14,7 +13,7 @@ import {
   resolveShipY,
 } from './input.js';
 import { drawScene } from './renderer.js';
-import { updateChecklist, updateProgress, wireUtilityControls } from './ui.js';
+import { updateChecklist, wireUtilityControls } from './ui.js';
 
 const MODE_META = {
   outcome: {
@@ -84,6 +83,8 @@ const fbTag = document.getElementById('fbTag');
 const feedbackCloseBtn = document.getElementById('feedbackCloseBtn');
 const modeExplanation = document.getElementById('modeExplanation');
 const overlayStartBtn = document.getElementById('overlayStartBtn');
+const spotlightStartHint = document.getElementById('spotlightStartHint');
+const modeSpotlight = document.getElementById('modeSpotlight');
 const mainStartBtn = document.getElementById('mainStartBtn');
 const finishMissionBtn = document.getElementById('finishMissionBtn');
 const playAgainBtn = document.getElementById('playAgainBtn');
@@ -97,6 +98,7 @@ let assets = {};
 let items = [];
 let isRunning = false;
 let spawnTimer = 0;
+let hasSelectedInitialMode = false;
 
 function resize() {
   canvas.width = canvas.parentElement.clientWidth;
@@ -133,7 +135,6 @@ function handleCollision(item) {
   isRunning = false;
   state = applyCollision(state, { isGood: item.isGood });
   updateChecklist(state.checklist);
-  updateProgress(state.itemsCollected, GOAL);
   showFeedback(item);
   if (isMissionComplete(state)) {
     finishMissionBtn.classList.remove('hidden');
@@ -189,18 +190,42 @@ function loop(now) {
 }
 
 function startGame() {
+  if (!hasSelectedInitialMode) return;
   gameUI.classList.add('hidden');
   isRunning = true;
 }
 
+function syncStartGate() {
+  overlayStartBtn.disabled = !hasSelectedInitialMode;
+  mainStartBtn.disabled = !hasSelectedInitialMode;
+  spotlightStartHint.classList.toggle('hidden', hasSelectedInitialMode);
+  modeSpotlight.classList.toggle('hidden', hasSelectedInitialMode);
+}
+
 function setMode(mode) {
   state = setFeedbackMode(state, mode);
+  if (!hasSelectedInitialMode) {
+    hasSelectedInitialMode = true;
+    syncStartGate();
+  }
   for (const m of Object.keys(MODE_META)) {
     const card = document.getElementById(`mode-${m}`);
     if (!card) continue;
     card.classList.toggle('active', m === mode);
+    card.classList.toggle('spotlight-target', !hasSelectedInitialMode);
   }
   modeExplanation.textContent = MODE_META[mode].explanation;
+}
+
+function showModeSelectionPrompt() {
+  modeExplanation.textContent = 'בחרו אחד מסוגי המשוב כדי להתחיל, ואז נסו להשלים בכל כרטיס גם אוצר וגם מכשול.';
+  for (const m of Object.keys(MODE_META)) {
+    const card = document.getElementById(`mode-${m}`);
+    if (!card) continue;
+    card.classList.remove('active');
+    card.classList.add('spotlight-target');
+  }
+  syncStartGate();
 }
 
 function wireButtons() {
@@ -246,10 +271,9 @@ wireUtilityControls({
 });
 
 resize();
-setMode('outcome');
+showModeSelectionPrompt();
 wireButtons();
 assets = await preloadImages();
 updateChecklist(state.checklist);
-updateProgress(0, GOAL);
 lastTime = performance.now();
 requestAnimationFrame(loop);

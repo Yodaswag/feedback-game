@@ -36,3 +36,7 @@ test('speed multiplier clamps to supported range', () => {
   assert.equal(setSpeedMultiplier(createInitialState(), 0.1).speedMultiplier, 0.5);
   assert.equal(setSpeedMultiplier(createInitialState(), 9).speedMultiplier, 3);
 });
+
+test('initial state starts with no feedback mode selected', () => {
+  assert.equal(createInitialState().feedbackMode, null);
+});
