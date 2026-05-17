@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pickItemType, createItem, checkCollision } from '../js/items.js';
-import { ITEM, CANVAS_SIZE, ITEM_WIDTH, ITEM_HEIGHT } from '../js/constants.js';
+import { ITEM, CANVAS_SIZE, ITEM_WIDTH, ITEM_HEIGHT, ITEM_SPAWN_MIN_Y, ITEM_SPAWN_MAX_Y } from '../js/constants.js';
 
 // pickItemType
 test('pickItemType returns one of the types in pool', () => {
@@ -14,7 +14,7 @@ test('pickItemType returns one of the types in pool', () => {
   const validTypes = pool.map(e => e.type);
   for (let i = 0; i < 100; i++) {
     const result = pickItemType(pool);
-    assert.ok(validTypes.includes(result), `unexpected type: ${result}`);
+    assert.ok(validTypes.includes(result.type), `unexpected type: ${result.type}`);
   }
 });
 
@@ -24,7 +24,7 @@ test('pickItemType with weight-0 entry never returns that type', () => {
     { type: ITEM.BOMB_LIT,     weight: 10 },
   ];
   for (let i = 0; i < 50; i++) {
-    assert.equal(pickItemType(pool), ITEM.BOMB_LIT);
+    assert.equal(pickItemType(pool).type, ITEM.BOMB_LIT);
   }
 });
 
@@ -40,11 +40,11 @@ test('createItem spawns at right edge of canvas', () => {
   assert.ok(item.x >= CANVAS_SIZE, `x ${item.x} should be >= CANVAS_SIZE ${CANVAS_SIZE}`);
 });
 
-test('createItem y is within canvas bounds', () => {
+test('createItem y is within spawn bounds', () => {
   for (let i = 0; i < 30; i++) {
     const item = createItem(i, ITEM.CHEST_RIBBON);
-    assert.ok(item.y >= ITEM_HEIGHT,              `y ${item.y} too small`);
-    assert.ok(item.y <= CANVAS_SIZE - ITEM_HEIGHT, `y ${item.y} too large`);
+    assert.ok(item.y >= ITEM_SPAWN_MIN_Y, `y ${item.y} too small`);
+    assert.ok(item.y <= ITEM_SPAWN_MAX_Y, `y ${item.y} too large`);
   }
 });
 

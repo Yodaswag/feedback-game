@@ -1,4 +1,7 @@
-import { CANVAS_SIZE, SHIP_X, CONSECUTIVE_TO_WIN, WATERLINE_Y, WATER_Y_TOP } from './constants.js';
+import {
+  CANVAS_SIZE, SHIP_X, CONSECUTIVE_TO_WIN, WATERLINE_Y, WATER_Y_TOP,
+  NUDGE_TEXT, NUDGE_POSITION, NUDGE_FONT_SIZE,
+} from './constants.js';
 
 const FONT = (size, bold = false) => `${bold ? 'bold ' : ''}${size}px 'Rubik', Arial, sans-serif`;
 const BLUE_DARK   = '#1a3f6f';
@@ -110,18 +113,18 @@ export function drawWaterline(ctx) {
 // Level badge drawn on a tattered-page strip at top-right
 export function drawLevelIndicator(ctx, images, levelIndex, feedbackTypeName) {
   const text = `שלב ${levelIndex + 1}: ${feedbackTypeName}`;
-  const x = CANVAS_SIZE - 190, w = 180, h = 36;
+  const x = CANVAS_SIZE - 190, y = 8, w = 180, h = 36;
 
   const page = images['tattered-page'];
   if (page) {
-    ctx.drawImage(page, x, 8, w, h);
+    ctx.drawImage(page, x, y, w, h);
   }
 
   ctx.fillStyle = BLUE_DARK;
   ctx.font = FONT(13, true);
-  ctx.textAlign = 'right';
+  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, CANVAS_SIZE - 14, 26);
+  ctx.fillText(text, x + w / 2, y + h / 2);
 }
 
 export function drawGameplayInstruction(ctx, images) {
@@ -144,6 +147,56 @@ export function drawGameplayInstruction(ctx, images) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, cx, y + h / 2);
+}
+
+// Resolve nudge anchor enum + offsets into pixel coords + textAlign.
+function resolveNudgeAnchor(pos) {
+  let x, textAlign;
+  switch (pos.axisX) {
+    case 'left':   x = 20;                  textAlign = 'left';   break;
+    case 'right':  x = CANVAS_SIZE - 20;    textAlign = 'right';  break;
+    case 'center':
+    default:       x = CANVAS_SIZE / 2;     textAlign = 'center'; break;
+  }
+  let y;
+  switch (pos.axisY) {
+    case 'middle': y = CANVAS_SIZE / 2;        break;
+    case 'bottom': y = CANVAS_SIZE - 20;       break;
+    case 'top':
+    default:       y = 0;                      break;
+  }
+  return { x: x + (pos.offsetX || 0), y: y + (pos.offsetY || 0), textAlign };
+}
+
+export function drawAvoidanceNudge(ctx, images) {
+  const { x, y, textAlign } = resolveNudgeAnchor(NUDGE_POSITION);
+  ctx.save();
+  ctx.font = FONT(NUDGE_FONT_SIZE, true);
+  ctx.textAlign = textAlign;
+  ctx.textBaseline = 'middle';
+
+  const metrics = ctx.measureText(NUDGE_TEXT);
+  const textW = metrics.width;
+  const padX = 32, padY = 14;
+  const pageW = textW + padX * 2;
+  const pageH = NUDGE_FONT_SIZE + padY * 2;
+  let pageX;
+  if (textAlign === 'left')        pageX = x - padX;
+  else if (textAlign === 'right')  pageX = x - textW - padX;
+  else                             pageX = x - pageW / 2;
+  const pageY = y - pageH / 2;
+
+  const page = images && images['tattered-page'];
+  if (page) {
+    ctx.drawImage(page, pageX, pageY, pageW, pageH);
+  } else {
+    ctx.fillStyle = 'rgba(245, 230, 200, 0.92)';
+    ctx.fillRect(pageX, pageY, pageW, pageH);
+  }
+
+  ctx.fillStyle = BLUE_DARK;
+  ctx.fillText(NUDGE_TEXT, x, y);
+  ctx.restore();
 }
 
 export function drawStartScreen(ctx, images) {

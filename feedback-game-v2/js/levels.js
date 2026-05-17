@@ -1,4 +1,4 @@
-import { ITEM, WATERLINE_Y } from './constants.js';
+import { ITEM, WATERLINE_Y, ITEM_HEIGHT, CANVAS_SIZE } from './constants.js';
 
 const LEVELS = [
   {
@@ -15,14 +15,17 @@ const LEVELS = [
       'כמה ניסיונות לקח לך? זו בדיוק התחושה של תלמיד שמקבל רק נכון/לא נכון ללא הסבר — ניסוי וטעייה בלבד.',
     spawnPool: [
       { type: ITEM.CHEST_RIBBON, weight: 3 },
-      { type: ITEM.CHEST_PLAIN,  weight: 3 },
-      { type: ITEM.BOMB_LIT,     weight: 2 },
+      { type: ITEM.CHEST_PLAIN, weight: 3 },
+      { type: ITEM.BOMB_LIT, weight: 2 },
+    ],
+    correctSpawnOptions: [
+      { type: ITEM.CHEST_RIBBON },
     ],
     isCorrect(item) { return item.type === ITEM.CHEST_RIBBON; },
-    isHazard(item)  { return item.type === ITEM.BOMB_LIT; },
+    isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(_item, correct) { return correct ? 'נכון' : 'לא נכון'; },
     transitionReveal:
-      'הכלל היה: ארגז עם סרט אדום = בטוח לאסוף. ארגז ללא סרט = מלכודת. פצצה דולקת = סכנה.',
+      ' ארגז עם סרט אדום = בטוח לאסוף. ארגז ללא סרט = מלכודת. פצצה דולקת = סכנה.',
     moodQuestion: 'איך הרגשת?',
     nextLevelIntro: 'בשלב הבא תקבל הסבר על מה שטעית.',
   },
@@ -40,19 +43,22 @@ const LEVELS = [
       'הרגשת את ההבדל? קצת פחות תסכול, אבל עדיין קשה לדעת מה לעשות בפעם הבאה.',
     spawnPool: [
       { type: ITEM.CHEST_GREEN, weight: 3 },
-      { type: ITEM.BOMB_LIT,    weight: 2 },
-      { type: ITEM.BOMB_UNLIT,  weight: 3 },
+      { type: ITEM.BOMB_LIT, weight: 2 },
+      { type: ITEM.BOMB_UNLIT, weight: 3 },
+    ],
+    correctSpawnOptions: [
+      { type: ITEM.BOMB_UNLIT },
     ],
     isCorrect(item) { return item.type === ITEM.BOMB_UNLIT; },
-    isHazard(item)  { return item.type === ITEM.BOMB_LIT; },
+    isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(item, correct) {
-      if (correct)                          return 'נכון! פצצה כבויה — בטוח לאסוף.';
-      if (item.type === ITEM.CHEST_GREEN)   return 'שגיאה! ארגז ירוק — מלכודת.';
-      if (item.type === ITEM.BOMB_LIT)      return 'שגיאה! פצצה דולקת — מסוכנת!';
+      if (correct) return 'נכון! פצצה כבויה — בטוח לאסוף.';
+      if (item.type === ITEM.CHEST_GREEN) return 'שגיאה! ארגז ירוק — מלכודת.';
+      if (item.type === ITEM.BOMB_LIT) return 'שגיאה! פצצה דולקת — מסוכנת!';
       return 'שגיאה!';
     },
     transitionReveal:
-      'הכלל היה: כל הארגזים הירוקים מסוכנים. פצצות דולקות — סכנה. פצצות כבויות — בטוח לאסוף.',
+      ' כל הארגזים הירוקים מסוכנים. פצצות דולקות — סכנה. פצצות כבויות — בטוח לאסוף.',
     moodQuestion: 'איך הרגשת לעומת השלב הקודם?',
     nextLevelIntro: 'בשלב הבא תקבל הסבר מלא — כולל למה ואיך להצליח.',
   },
@@ -70,12 +76,16 @@ const LEVELS = [
       'הרגשת את ה"אהה!"? זו בדיוק המטרה של משוב בונה — להפוך כאוס לבהירות.',
     spawnPool: [
       { type: ITEM.CHEST_RIBBON, weight: 3 },
-      { type: ITEM.BOMB_UNLIT,   weight: 3 },
-      { type: ITEM.BOMB_LIT,     weight: 2 },
+      { type: ITEM.BOMB_UNLIT, weight: 3 },
+      { type: ITEM.BOMB_LIT, weight: 2 },
+    ],
+    correctSpawnOptions: [
+      { type: ITEM.CHEST_RIBBON, yRange: [ITEM_HEIGHT, WATERLINE_Y - 1] },
+      { type: ITEM.BOMB_UNLIT, yRange: [WATERLINE_Y, CANVAS_SIZE - ITEM_HEIGHT] },
     ],
     isCorrect(item) {
       if (item.type === ITEM.CHEST_RIBBON) return item.y < WATERLINE_Y;
-      if (item.type === ITEM.BOMB_UNLIT)   return item.y >= WATERLINE_Y;
+      if (item.type === ITEM.BOMB_UNLIT) return item.y >= WATERLINE_Y;
       return false;
     },
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
@@ -93,7 +103,7 @@ const LEVELS = [
       return '';
     },
     transitionReveal:
-      'הכלל היה: מעל קו המים — ארגז בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, ארגז מלכודת. המיקום קובע הכל!',
+      ' מעל קו המים — ארגז בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, ארגז מלכודת. המיקום קובע הכל!',
     moodQuestion: 'איך הרגשת לעומת השלבים הקודמים?',
     nextLevelIntro: null,
   },

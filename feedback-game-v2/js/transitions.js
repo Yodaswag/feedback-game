@@ -4,7 +4,7 @@ let activeButtons = [];
 
 const FONT = (size, bold = false) => `${bold ? 'bold ' : ''}${size}px 'Rubik', Arial, sans-serif`;
 const BLUE_DARK = '#1a3f6f';
-const BLUE_MID  = '#2d6b9e';
+const BLUE_MID = '#2d6b9e';
 
 function drawButton(ctx, label, x, y, w, h, highlight) {
   ctx.fillStyle = highlight ? BLUE_MID : 'rgba(45,107,158,0.18)';
@@ -125,7 +125,7 @@ export function drawRevealScreen(ctx, images, level) {
     lineY = wrapText(ctx, line, textCX, lineY, textMaxW, 21);
   }
 
-  const ruleY = py + ph - vInsetBot - 90;
+  const ruleY = py + ph - vInsetBot - 75;
   ctx.fillStyle = BLUE_DARK;
   ctx.font = FONT(12, true);
   ctx.textAlign = 'center';
@@ -134,7 +134,7 @@ export function drawRevealScreen(ctx, images, level) {
   ctx.fillStyle = BLUE_MID;
   wrapText(ctx, level.transitionReveal, textCX, ruleY + 18, textMaxW, 18);
 
-  drawButton(ctx, 'המשך ←', textCX - 70, py + ph - vInsetBot - 44, 140, 40, true);
+  drawButton(ctx, 'המשך ←', textCX - 75, py + ph - vInsetBot - 44, 140, 40, true);
 }
 
 

@@ -1,14 +1,64 @@
 import { PHASE, TRANSITION_STEP, SHIP_X, SHIP_WIDTH, SHIP_HEIGHT,
          ITEM_SPEED, ITEM_SPAWN_INTERVAL, SHIP_SPEED, POPUP_DURATION,
-         CANVAS_SIZE, ITEM_HITBOX_RATIO } from './constants.js';
+         CANVAS_SIZE, ITEM_HITBOX_RATIO, ITEM_WIDTH,
+         ITEM_SPAWN_MIN_Y, ITEM_SPAWN_MAX_Y,
+         NUDGE_DELAY_MS, FLOOD_DELAY_MS, FLOOD_ITEM_COUNT, FLOOD_Y_JITTER,
+         FLOOD_X_STAGGER } from './constants.js';
 import LEVELS from './levels.js';
 import * as State from './state.js';
 import * as Assets from './assets.js';
 import * as Input from './input.js';
-import { pickItemType, createItem, checkCollision } from './items.js';
+import { pickItemType, createItem, createItemAt, checkCollision } from './items.js';
 import * as Renderer from './renderer.js';
 import * as Feedback from './feedback.js';
 import * as Transitions from './transitions.js';
+
+function isCorrectType(level, type) {
+  return level.correctSpawnOptions?.some(o => o.type === type) ?? false;
+}
+
+function spawnContext(state, level) {
+  return {
+    recentSpawnHistory: state.recentSpawnHistory,
+    incorrectStreak:    state.incorrectStreak,
+    level,
+  };
+}
+
+function floodSpawn(state, level) {
+  const minY = ITEM_SPAWN_MIN_Y;
+  const maxY = ITEM_SPAWN_MAX_Y;
+  const span = maxY - minY;
+  const slot = span / (FLOOD_ITEM_COUNT - 1);
+
+  // Shuffle Y-slot order so item types don't correlate with vertical position.
+  const order = Array.from({ length: FLOOD_ITEM_COUNT }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+
+  const baseX = CANVAS_SIZE + ITEM_WIDTH / 2;
+  const newItems = [];
+  let working = state;
+  for (let i = 0; i < FLOOD_ITEM_COUNT; i++) {
+    const pick = pickItemType(level.spawnPool, spawnContext(working, level));
+    const slotIdx = order[i];
+    const baseY = minY + slotIdx * slot;
+    const jitter = (Math.random() * 2 - 1) * FLOOD_Y_JITTER;
+    let y = Math.round(baseY + jitter);
+    if (pick.yRange) {
+      y = Math.max(pick.yRange[0], Math.min(pick.yRange[1], y));
+    }
+    y = Math.max(minY, Math.min(maxY, y));
+    const x = baseX + i * FLOOD_X_STAGGER;
+    const item = createItemAt(working.nextItemId + i, pick.type, y);
+    item.x = x;
+    newItems.push(item);
+    working = State.recordSpawn(working, pick.type, isCorrectType(level, pick.type));
+  }
+  return State.setFloodTriggered(State.appendItems(working, newItems));
+}
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -63,12 +113,18 @@ function update(deltaMs) {
     state = State.updateItems(state, deltaX);
 
     state = State.tickSpawnTimer(state, deltaMs);
+    state = State.tickAvoidance(state, deltaMs);
+    const levelForSpawn = LEVELS[state.levelIndex];
     if (state.spawnTimer <= 0) {
-      const level = LEVELS[state.levelIndex];
-      const type = pickItemType(level.spawnPool);
-      const item = createItem(state.nextItemId, type);
+      const pick = pickItemType(levelForSpawn.spawnPool, spawnContext(state, levelForSpawn));
+      const item = createItem(state.nextItemId, pick.type, pick.yRange, state.items);
       state = State.spawnItem(state, item);
+      state = State.recordSpawn(state, pick.type, isCorrectType(levelForSpawn, pick.type));
       state = State.resetSpawnTimer(state, ITEM_SPAWN_INTERVAL);
+    }
+
+    if (state.avoidanceTimer >= FLOOD_DELAY_MS && !state.floodTriggered) {
+      state = floodSpawn(state, levelForSpawn);
     }
 
     const level = LEVELS[state.levelIndex];
@@ -117,6 +173,9 @@ function render() {
       Renderer.drawCounter(ctx, Assets.images, state.consecutiveCount);
       Renderer.drawLevelIndicator(ctx, Assets.images, state.levelIndex, level.feedbackTypeName);
       Renderer.drawGameplayInstruction(ctx, Assets.images);
+      if (state.avoidanceTimer >= NUDGE_DELAY_MS) {
+        Renderer.drawAvoidanceNudge(ctx, Assets.images);
+      }
       if (state.phase === PHASE.FEEDBACK && state.activePopup) {
         Feedback.drawPopup(ctx, Assets.images, state.activePopup);
       }

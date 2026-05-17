@@ -1,4 +1,6 @@
-import { PHASE, TRANSITION_STEP, CONSECUTIVE_TO_WIN } from './constants.js';
+import {
+  PHASE, TRANSITION_STEP, CONSECUTIVE_TO_WIN, SPAWN_HISTORY_LEN,
+} from './constants.js';
 
 export function createInitialState() {
   return {
@@ -13,6 +15,10 @@ export function createInitialState() {
     levelResults: [],
     spawnTimer: 0,
     nextItemId: 0,
+    recentSpawnHistory: [],
+    incorrectStreak: 0,
+    avoidanceTimer: 0,
+    floodTriggered: false,
   };
 }
 
@@ -45,7 +51,13 @@ export function updateItems(state, deltaX) {
 export function collectItem(state, itemId, isCorrect) {
   const items = state.items.filter(i => i.id !== itemId);
   const consecutiveCount = isCorrect ? state.consecutiveCount + 1 : 0;
-  return { ...state, items, consecutiveCount };
+  return {
+    ...state,
+    items,
+    consecutiveCount,
+    avoidanceTimer: 0,
+    floodTriggered: false,
+  };
 }
 
 export function showPopup(state, text, isCorrect, duration) {
@@ -101,6 +113,10 @@ export function advanceLevel(state) {
     popupTimer: 0,
     transition: null,
     spawnTimer: 0,
+    recentSpawnHistory: [],
+    incorrectStreak: 0,
+    avoidanceTimer: 0,
+    floodTriggered: false,
     levelResults: [
       ...state.levelResults,
       { mood: state.transition?.playerMood ?? null },
@@ -114,4 +130,28 @@ export function resetSpawnTimer(state, interval) {
 
 export function tickSpawnTimer(state, deltaMs) {
   return { ...state, spawnTimer: Math.max(0, state.spawnTimer - deltaMs) };
+}
+
+// Record that an item of `type` was spawned. `isCorrectType` resets/increments
+// the incorrect streak used by the smart spawn algorithm.
+export function recordSpawn(state, type, isCorrectType) {
+  const history = [...state.recentSpawnHistory, type].slice(-SPAWN_HISTORY_LEN);
+  const incorrectStreak = isCorrectType ? 0 : state.incorrectStreak + 1;
+  return { ...state, recentSpawnHistory: history, incorrectStreak };
+}
+
+export function tickAvoidance(state, deltaMs) {
+  return { ...state, avoidanceTimer: state.avoidanceTimer + deltaMs };
+}
+
+export function setFloodTriggered(state) {
+  return { ...state, floodTriggered: true };
+}
+
+export function appendItems(state, newItems) {
+  return {
+    ...state,
+    items: [...state.items, ...newItems],
+    nextItemId: state.nextItemId + newItems.length,
+  };
 }
