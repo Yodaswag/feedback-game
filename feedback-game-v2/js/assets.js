@@ -13,6 +13,7 @@ const IMAGE_PATHS = [
   'pirate-confused',
   'tattered-page',
   'logo',
+  'arrow',
 ];
 
 export const images = {};

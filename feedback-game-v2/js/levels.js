@@ -25,7 +25,7 @@ const LEVELS = [
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(_item, correct) { return correct ? 'נכון' : 'לא נכון'; },
     transitionReveal:
-      ' ארגז עם סרט אדום = בטוח לאסוף. ארגז ללא סרט = מלכודת. פצצה דולקת = סכנה.',
+      ' תיבה עם סרט אדום = בטוח לאסוף. תיבה ללא סרט = מלכודת. פצצה דולקת = סכנה.',
     moodQuestion: 'איך הרגשת?',
     nextLevelIntro: 'בשלב הבא תקבל הסבר על מה שטעית.',
   },
@@ -53,7 +53,7 @@ const LEVELS = [
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(item, correct) {
       if (correct) return 'נכון! פצצה כבויה — בטוח לאסוף.';
-      if (item.type === ITEM.CHEST_GREEN) return 'שגיאה! ארגז ירוק — מלכודת.';
+      if (item.type === ITEM.CHEST_GREEN) return 'שגיאה! תיבה ירוק — מלכודת.';
       if (item.type === ITEM.BOMB_LIT) return 'שגיאה! פצצה דולקת — מסוכנת!';
       return 'שגיאה!';
     },
@@ -91,9 +91,9 @@ const LEVELS = [
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(item, correct) {
       if (item.type === ITEM.CHEST_RIBBON && correct)
-        return 'מצוין! ארגז מעל קו המים — כלל: ארגז צף מעל = אוצר אמיתי. חפש ארגזים בחצי העליון!';
+        return 'מצוין! תיבה מעל קו המים — כלל: תיבה צף מעל = אוצר אמיתי. חפש תיבות בחצי העליון!';
       if (item.type === ITEM.CHEST_RIBBON && !correct)
-        return 'טעות! הארגז היה מתחת לקו המים — שם הוא מלכודת. כלל: ארגז מעל קו המים בלבד!';
+        return 'טעות! הארגז היה מתחת לקו המים — שם הוא מלכודת. כלל: תיבה מעל קו המים בלבד!';
       if (item.type === ITEM.BOMB_UNLIT && correct)
         return 'נהדר! פצצה כבויה מתחת לקו המים — שם היא בטוחה לאיסוף. כלל: פצצה בחצי התחתון = בטוח!';
       if (item.type === ITEM.BOMB_UNLIT && !correct)
@@ -103,7 +103,7 @@ const LEVELS = [
       return '';
     },
     transitionReveal:
-      ' מעל קו המים — ארגז בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, ארגז מלכודת. המיקום קובע הכל!',
+      ' מעל קו המים — תיבה בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, תיבה מלכודת. המיקום קובע הכל!',
     moodQuestion: 'איך הרגשת לעומת השלבים הקודמים?',
     nextLevelIntro: null,
   },

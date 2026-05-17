@@ -125,7 +125,7 @@ export function drawRevealScreen(ctx, images, level) {
     lineY = wrapText(ctx, line, textCX, lineY, textMaxW, 21);
   }
 
-  const ruleY = py + ph - vInsetBot - 75;
+  const ruleY = py + ph - vInsetBot - 105;
   ctx.fillStyle = BLUE_DARK;
   ctx.font = FONT(12, true);
   ctx.textAlign = 'center';
@@ -138,22 +138,24 @@ export function drawRevealScreen(ctx, images, level) {
 }
 
 
+const END_CARD_TITLE = 'סיימתם את המסע!';
 const END_CARD_TEXT = [
-  '🏴‍☠️ סיימתם את המסע!',
+  'האם תדמיינו לנסות לפענח את כלל שלב 3 עם משוב תוצאה בלבד? 😰',
   '',
-  'האם תדמיינו לנסות לפענח את כלל שלב 3',
-  'עם משוב תוצאה בלבד? 😰',
+  'הכללים שהתלמידים שלנו מתמודדים איתם בחיים האמיתיים הם לרוב מורכבים — קשה לפענח אותם בניסוי וטעייה.',
   '',
-  'הכללים שהתלמידים שלנו מתמודדים איתם',
-  'בחיים האמיתיים הם לרוב מורכבים —',
-  'קשה לפענח אותם בניסוי וטעייה.',
+  '__BOLD__משוב בונה בלמידה מבוססת משחק — הוא לא נחמד, הוא הכרחי!',
   '',
-  'משוב בונה בלמידה מבוססת משחק',
-  'הוא לא נחמד — הוא הכרחי!',
-  '',
-  'השתמשו בו כדי לייצר חוויות',
-  'לימוד משמעותיות ומרתקות. ⚓',
+  'השתמשו בו כדי לייצר חוויות לימוד משמעותיות ומרתקות. ⚓',
 ];
+
+const SUMMARY_COLS = [
+  { name: 'משוב תוצאה', brief: 'רק נכון/לא נכון' },
+  { name: 'משוב מתקן', brief: 'מצביע על מה לתקן ואיך' },
+  { name: 'משוב בונה', brief: 'מסביר למה ומנחה קדימה' },
+];
+
+const SCROLL_PROMPT = 'גללו מטה כדי לקבל את המטבעות שלכם, או שחקו שוב ללמידה חוזרת';
 
 export function drawEndScreen(ctx, images, levelResults) {
   activeButtons = [];
@@ -171,35 +173,92 @@ export function drawEndScreen(ctx, images, levelResults) {
     ctx.strokeRect(px, py, pw, ph);
   }
 
-  drawPirate(ctx, images, 'happy', px + pw - 55, py + 55, 90);
-
+  // Title — large, bold (Gestalt emphasis)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  let lineY = py + 22;
-  for (const line of END_CARD_TEXT) {
-    if (line === '') { lineY += 8; continue; }
-    const isBold = line.startsWith('משוב בונה') || line.startsWith('🏴');
+  ctx.fillStyle = BLUE_DARK;
+  ctx.font = FONT(24, true);
+  let lineY = py + 48;
+  ctx.fillText(END_CARD_TITLE, CANVAS_SIZE / 2, lineY);
+  lineY += 36;
+
+  // Body — wider text area (pw - 60)
+  const bodyMaxW = pw - 60;
+  for (const rawLine of END_CARD_TEXT) {
+    if (rawLine === '') { lineY += 6; continue; }
+    const isBold = rawLine.startsWith('__BOLD__');
+    const line = isBold ? rawLine.slice('__BOLD__'.length) : rawLine;
     ctx.fillStyle = isBold ? BLUE_DARK : BLUE_MID;
-    ctx.font = isBold ? FONT(16, true) : FONT(14);
-    lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, pw - 120, 20);
+    ctx.font = isBold ? FONT(15, true) : FONT(13);
+    lineY = wrapText(ctx, line, CANVAS_SIZE / 2, lineY, bodyMaxW, 18);
   }
 
-  const stripY = py + ph - 110;
-  const summaries = ['משוב תוצאה', 'משוב מתקן', 'משוב בונה'];
-  summaries.forEach((name, i) => {
-    const mood = levelResults[i]?.mood ?? '—';
-    const sx = px + 16 + i * ((pw - 32) / 3);
-    const sw = (pw - 32) / 3 - 6;
+  // Stats row — RTL: index 0 on right
+  const stripY = py + ph - 290;
+  const colW = (pw - 32) / 3;
+  SUMMARY_COLS.forEach((col, i) => {
+    const visualIdx = 2 - i;
+    const sx = px + 16 + visualIdx * colW;
+    const cx = sx + colW / 2;
+    const mood = levelResults[i]?.mood ?? null;
+
+    drawPirate(ctx, images, moodLabelToKey(mood), cx, stripY + 30, 56);
+
     ctx.fillStyle = BLUE_DARK;
-    ctx.font = FONT(11, true);
+    ctx.font = FONT(17, true);
     ctx.textAlign = 'center';
-    ctx.fillText(name, sx + sw / 2, stripY + 8);
+    ctx.fillText(col.name, cx, stripY + 68);
+
     ctx.fillStyle = BLUE_MID;
-    ctx.font = FONT(11);
-    ctx.fillText(mood, sx + sw / 2, stripY + 26);
+    ctx.font = FONT(13);
+    ctx.fillText(mood ? `סימנת: ${mood}` : 'אתה סימנת: —', cx, stripY + 90);
+
+    ctx.fillStyle = BLUE_MID;
+    ctx.font = FONT(13);
+    wrapText(ctx, col.brief, cx, stripY + 110, colW - 12, 16);
   });
 
-  drawButton(ctx, 'שחק שוב', CANVAS_SIZE / 2 - 60, py + ph - 38, 120, 34, true);
+  // Prompt line + aligned arrow & button (all inside card)
+  const promptY = py + ph - 90;
+  ctx.fillStyle = BLUE_DARK;
+  ctx.font = FONT(15);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(SCROLL_PROMPT, CANVAS_SIZE / 2, promptY);
+
+  // x-positions: "גללו" visually rightmost, "שחקו שוב" inside left half (partB)
+  const fullW = ctx.measureText(SCROLL_PROMPT).width;
+  const partB = 'או שחקו שוב ללמידה חוזרת';
+  const partBW = ctx.measureText(partB).width;
+  const lineLeft = CANVAS_SIZE / 2 - fullW / 2;
+  const lineRight = lineLeft + fullW;
+  const arrowX = lineRight - ctx.measureText('גללו מטה כדי לקבל את המטבעות').width / 2;
+  // partB center placed at lineLeft + partBW/2; "שחקו שוב" sits near center of partB — small shift left for "או"
+  const btnX = lineLeft + partBW / 2 - ctx.measureText('או ').width / 2 + ctx.measureText(partB).width / 2;
+
+  // Action row centerline — comfortably inside card bottom
+  const actionY = py + ph - 55;
+  const arrowImg = images['arrow'];
+  const aSize = 40;
+  if (arrowImg) {
+    ctx.drawImage(arrowImg, arrowX - aSize / 2, actionY - aSize / 2, aSize, aSize);
+  } else {
+    ctx.fillStyle = BLUE_DARK;
+    ctx.font = FONT(28, true);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('↓', arrowX, actionY);
+  }
+
+  drawButton(ctx, 'שחק שוב', btnX - 55, actionY - 17, 110, 34, true);
+}
+
+function moodLabelToKey(label) {
+  if (!label) return 'bored';
+  if (label.includes('מתרגש') || label.includes('שמח') || label.includes('מאושר')) return 'happy';
+  if (label.includes('מתוסכל') || label.includes('כועס')) return 'frustrated';
+  if (label.includes('מבולבל') || label.includes('תקוע') || label.includes('לא בטוח')) return 'confused';
+  return 'bored';
 }
 
 export function handleClick(x, y) {
