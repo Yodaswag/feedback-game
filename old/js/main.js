@@ -86,7 +86,6 @@ const overlayStartBtn = document.getElementById('overlayStartBtn');
 const spotlightStartHint = document.getElementById('spotlightStartHint');
 const modeSpotlight = document.getElementById('modeSpotlight');
 const mainStartBtn = document.getElementById('mainStartBtn');
-const finishMissionBtn = document.getElementById('finishMissionBtn');
 const playAgainBtn = document.getElementById('playAgainBtn');
 
 let state = createInitialState();
@@ -137,8 +136,9 @@ function handleCollision(item) {
   updateChecklist(state.checklist);
   showFeedback(item);
   if (isMissionComplete(state)) {
-    finishMissionBtn.classList.remove('hidden');
-    mainStartBtn.classList.add('hidden');
+    mainStartBtn.disabled = false;
+    mainStartBtn.textContent = 'סיום המשימה וקבלת האוצר 🏆';
+    mainStartBtn.className = 'pulse-gold bg-[#d69e2e] hover:bg-[#b7791f] text-white font-black py-4 rounded-xl shadow-2xl transition-all scale-105 text-sm uppercase';
   }
 }
 
@@ -197,7 +197,6 @@ function startGame() {
 
 function syncStartGate() {
   overlayStartBtn.disabled = !hasSelectedInitialMode;
-  mainStartBtn.disabled = !hasSelectedInitialMode;
   spotlightStartHint.classList.toggle('hidden', hasSelectedInitialMode);
   modeSpotlight.classList.toggle('hidden', hasSelectedInitialMode);
 }
@@ -230,10 +229,11 @@ function showModeSelectionPrompt() {
 
 function wireButtons() {
   overlayStartBtn.addEventListener('click', startGame);
-  mainStartBtn.addEventListener('click', startGame);
-  finishMissionBtn.addEventListener('click', () => {
-    isRunning = false;
-    winUI.classList.remove('hidden');
+  mainStartBtn.addEventListener('click', () => {
+    if (isMissionComplete(state)) {
+      isRunning = false;
+      winUI.classList.remove('hidden');
+    }
   });
   playAgainBtn.addEventListener('click', () => location.reload());
   feedbackCloseBtn.addEventListener('click', () => {
