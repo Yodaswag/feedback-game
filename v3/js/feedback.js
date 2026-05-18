@@ -23,18 +23,47 @@ export function drawPopup(ctx, images, popup) {
     ctx.strokeRect(POPUP_X, POPUP_Y, POPUP_W, POPUP_H);
   }
 
-  // Correct/wrong symbol
-  ctx.fillStyle = isCorrect ? '#1a7a3f' : '#8b1a1a';
-  ctx.font = FONT(24, true);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText(isCorrect ? '✓' : '✗', POPUP_X + POPUP_W / 2, POPUP_Y + 16);
+  // Draw the circular Correct/Wrong indicator badge at the top-right
+  ctx.save();
+  ctx.fillStyle = isCorrect ? '#2ecc71' : '#e74c3c';
+  ctx.beginPath();
+  ctx.arc(POPUP_X + POPUP_W - 35, POPUP_Y + 28, 12, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Always show text
-  ctx.fillStyle = BLUE_DARK;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = FONT(12, true);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(isCorrect ? '✓' : '✗', POPUP_X + POPUP_W - 35, POPUP_Y + 28);
+  ctx.restore();
+
+  // Draw Title area with Compass Icon + "המצפן אומר:"
+  ctx.save();
+  const titleText = 'המצפן אומר:';
   ctx.font = FONT(15, true);
+  const textWidth = ctx.measureText(titleText).width;
+  
+  const iconSize = 24;
+  const gap = 8;
+  const totalTitleW = iconSize + gap + textWidth;
+  const startX = POPUP_X + (POPUP_W - totalTitleW) / 2;
+
+  const compassImg = images['compass'];
+  if (compassImg) {
+    ctx.drawImage(compassImg, startX, POPUP_Y + 28 - iconSize / 2, iconSize, iconSize);
+  }
+
+  ctx.fillStyle = BLUE_DARK;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(titleText, startX + iconSize + gap, POPUP_Y + 28);
+  ctx.restore();
+
+  // Always show text beneath title
+  ctx.fillStyle = '#3c2716';
+  ctx.font = FONT(14, true);
   ctx.textBaseline = 'top';
-  drawWrappedText(ctx, text, POPUP_X + 20, POPUP_Y + 52, POPUP_W - 40, 24);
+  drawWrappedText(ctx, text, POPUP_X + 22, POPUP_Y + 62, POPUP_W - 44, 22);
 }
 
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {

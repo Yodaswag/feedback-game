@@ -14,6 +14,7 @@ const IMAGE_PATHS = [
   'tattered-page',
   'logo',
   'arrow',
+  'compass',
 ];
 
 export const images = {};
