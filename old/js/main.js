@@ -34,10 +34,8 @@ const MODE_META = {
 };
 
 const ITEM_TYPES = [
-  { id: 'treasure', label: 'יהלום',    isGood: true,  hint: 'חפצים נוצצים מעידים על אוצר יקר. חפש את הניצוץ!' },
-  { id: 'barrel',   label: 'חבית נפט', isGood: false, hint: 'חביות נפט הן כהות ואטומות. הן פוגעות בסביבה הימית.' },
-  { id: 'fish',     label: 'דג זהב',   isGood: true,  hint: 'דגים צהובים הם סימן למים בריאים. הם תמיד בחירה טובה.' },
-  { id: 'mine',     label: 'מוקש ימי', isGood: false, hint: 'מוקשים הם תמיד שחורים עם קוצים חדים. היזהר מצורות אלו!' },
+  { id: 'treasure', label: 'תיבת אוצר', isGood: true,  hint: 'תיבות אוצר צבעוניות ונוצצות מעידות על אוצר יקר.' },
+  { id: 'bomb',     label: 'פצצה',      isGood: false, hint: 'פצצות הן עגולות ושחורות עם פתיל בוער, היזהרו מהן!' },
 ];
 
 const SPAWN_INTERVAL_BASE = 1.8; // seconds
