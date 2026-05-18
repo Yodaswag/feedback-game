@@ -471,7 +471,7 @@ export function drawLevelSelectScreen(ctx, images, state, layout, hoverTarget) {
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(16, true);
-  ctx.fillText('בכל שלב עליכם לגלות את החוקיות כדי לעבור את השלב', pageCenterX, page.y + 108);
+  ctx.fillText('בכל שלב עליכם לגלות החוקיות הנסתרת ולאסוף פריט נכון 3 פעמים ברצף', pageCenterX, page.y + 108);
   ctx.fillText('פתחו שלבים בהדרגה, ואז חזרו לאסוף את האוצר.', pageCenterX, page.y + 136);
 
   const thumbs = [
