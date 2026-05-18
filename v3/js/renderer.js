@@ -199,48 +199,6 @@ export function drawAvoidanceNudge(ctx, images) {
   ctx.restore();
 }
 
-export function drawStartScreen(ctx, images) {
-  drawBackground(ctx, images);
-
-  // Tattered-page card for start text
-  const page = images['tattered-page'];
-  const cx = CANVAS_SIZE / 2;
-  const cardX = 60, cardY = 80, cardW = CANVAS_SIZE - 120, cardH = 380;
-  if (page) {
-    ctx.drawImage(page, cardX, cardY, cardW, cardH);
-  } else {
-    ctx.fillStyle = '#f5e6c8';
-    ctx.fillRect(cardX, cardY, cardW, cardH);
-  }
-
-  // Draw logo image with 'multiply' blend mode for seamless parchment integration
-  const logo = images['logo'];
-  if (logo) {
-    const logoW = 95;
-    const logoH = 95;
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(logo, cx - logoW / 2, cardY + 25, logoW, logoH);
-    ctx.restore();
-  }
-
-  ctx.fillStyle = BLUE_DARK;
-  ctx.font = FONT(30, true);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('הפלגת המשובים', cx, cardY + 160);
-
-  ctx.fillStyle = BLUE_MID;
-  ctx.font = FONT(16);
-  ctx.fillText('במשחק זה עליכם לאסוף את הפריט הנכון', cx, cardY + 215);
-  ctx.fillText('3 פעמים ברצף.', cx, cardY + 240);
-  ctx.fillText('תוכלו לגלות מה הפריט הנכון בעזרת המשובים.', cx, cardY + 270);
-
-  ctx.fillStyle = BLUE_DARK;
-  ctx.font = FONT(18, true);
-  ctx.fillText('לחץ להתחלה', cx, cardY + 325);
-}
-
 function drawRoundedRect(ctx, x, y, width, height, radius, fill, stroke) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -257,198 +215,298 @@ function drawRoundedRect(ctx, x, y, width, height, radius, fill, stroke) {
   if (stroke) ctx.stroke();
 }
 
-export function drawLevelSelectScreen(ctx, images, state) {
-  const completedLevels = state.completedLevels;
-  const allLevelsUnlockedFromStart = state.allLevelsUnlockedFromStart;
-
-  // Draw background texture
-  const tex = images['background-texture'];
-  if (tex) {
-    ctx.drawImage(tex, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
-  } else {
-    ctx.fillStyle = '#d4b896';
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+function getSharedPageRect(layout) {
+  const page = layout?.sharedPage;
+  if (page && Number.isFinite(page.x) && Number.isFinite(page.y) && Number.isFinite(page.w) && Number.isFinite(page.h)) {
+    return page;
   }
 
-  // Draw Title Card using tattered-page
+  return {
+    x: 24,
+    y: 18,
+    w: CANVAS_SIZE - 48,
+    h: CANVAS_SIZE - 36,
+  };
+}
+
+function getCenteredRect(rect, scale = 1) {
+  const w = rect.w * scale;
+  const h = rect.h * scale;
+  return {
+    x: rect.cx - w / 2,
+    y: rect.cy - h / 2,
+    w,
+    h,
+    cx: rect.cx,
+    cy: rect.cy,
+  };
+}
+
+function drawSharedPageShell(ctx, images, rect) {
   const page = images['tattered-page'];
+  ctx.save();
+  ctx.shadowColor = 'rgba(45, 28, 12, 0.28)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 10;
   if (page) {
-    ctx.drawImage(page, 40, 15, 520, 105);
+    ctx.drawImage(page, rect.x, rect.y, rect.w, rect.h);
   } else {
-    ctx.fillStyle = 'rgba(255, 245, 220, 0.85)';
-    ctx.fillRect(40, 15, 520, 105);
+    ctx.fillStyle = '#f5e6c8';
+    drawRoundedRect(ctx, rect.x, rect.y, rect.w, rect.h, 24, true, false);
+  }
+  ctx.restore();
+}
+
+function drawPrimaryButton(ctx, rect, label, hovered, disabled = false) {
+  const buttonRect = getCenteredRect(rect, hovered && !disabled ? 1.035 : 1);
+  const gradient = ctx.createLinearGradient(buttonRect.x, buttonRect.y, buttonRect.x, buttonRect.y + buttonRect.h);
+  const baseTop = disabled ? 'rgba(135, 170, 201, 0.72)' : '#78b3de';
+  const baseBottom = disabled ? 'rgba(74, 120, 165, 0.78)' : '#2d6b9e';
+  gradient.addColorStop(0, baseTop);
+  gradient.addColorStop(1, baseBottom);
+
+  ctx.save();
+  ctx.shadowColor = disabled ? 'rgba(26, 63, 111, 0.18)' : 'rgba(26, 63, 111, 0.35)';
+  ctx.shadowBlur = hovered && !disabled ? 16 : 12;
+  ctx.shadowOffsetY = hovered && !disabled ? 8 : 6;
+  ctx.fillStyle = gradient;
+  ctx.strokeStyle = disabled ? 'rgba(26, 63, 111, 0.45)' : BLUE_DARK;
+  ctx.lineWidth = 3;
+  drawRoundedRect(ctx, buttonRect.x, buttonRect.y, buttonRect.w, buttonRect.h, 16, true, true);
+
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+  drawRoundedRect(
+    ctx,
+    buttonRect.x + 5,
+    buttonRect.y + 4,
+    buttonRect.w - 10,
+    Math.max(12, buttonRect.h * 0.42),
+    12,
+    true,
+    false,
+  );
+
+  const maxTextWidth = Math.max(40, buttonRect.w - 28);
+  let fontSize = label.length > 26 ? 16 : 18;
+  while (fontSize > 12) {
+    ctx.font = FONT(fontSize, true);
+    if (ctx.measureText(label).width <= maxTextWidth) break;
+    fontSize -= 1;
   }
 
-  ctx.fillStyle = BLUE_DARK;
-  ctx.font = FONT(24, true);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = FONT(fontSize, true);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('בחירת שלב', 300, 48);
+  ctx.fillText(label, rect.cx, rect.cy + (hovered && !disabled ? -1 : 0));
+  ctx.restore();
+}
 
-  ctx.fillStyle = '#3c2716';
-  ctx.font = FONT(16, true);
-  ctx.fillText('בכל שלב עליכם לגלות את החוקיות כדי לעבור את השלב', 300, 82);
+function drawLevelCard(ctx, images, card, label, itemKeys, hasWaterline, unlocked, completed, hovered) {
+  const frame = getCenteredRect(card, hovered && unlocked ? 1.04 : 1);
+  const artInsetX = 10;
+  const artInsetTop = 10;
+  const artInsetBottom = 40;
+  const art = {
+    x: frame.x + artInsetX,
+    y: frame.y + artInsetTop,
+    w: frame.w - artInsetX * 2,
+    h: frame.h - artInsetTop - artInsetBottom,
+  };
+  const artRight = art.x + art.w;
+  const artBottom = art.y + art.h;
 
-  // Position of thumbnails from right to left:
-  // Level 1: Right, Level 2: Center, Level 3: Left.
-  const thumbW = 140;
-  const thumbH = 180;
-  const thumbY = 150;
-  
-  const thumbs = [
-    { index: 0, cx: 470, label: 'שלב 1: משוב תוצאה', items: ['chest-ribbon', 'chest-plain', 'bomb-lit'], hasLine: false },
-    { index: 1, cx: 300, label: 'שלב 2: משוב מתקן', items: ['bomb-unlit', 'chest-green', 'bomb-lit'], hasLine: false },
-    { index: 2, cx: 130, label: 'שלב 3: משוב בונה', items: ['chest-ribbon', 'bomb-unlit', 'bomb-lit'], hasLine: true }
-  ];
+  ctx.save();
+  ctx.shadowColor = hovered && unlocked ? 'rgba(26, 63, 111, 0.22)' : 'rgba(60, 39, 22, 0.14)';
+  ctx.shadowBlur = hovered && unlocked ? 16 : 10;
+  ctx.shadowOffsetY = hovered && unlocked ? 8 : 5;
+  ctx.fillStyle = hovered && unlocked ? 'rgba(255, 255, 255, 0.9)' : 'rgba(252, 246, 233, 0.86)';
+  ctx.strokeStyle = hovered && unlocked ? BLUE_MID : 'rgba(114, 85, 56, 0.28)';
+  ctx.lineWidth = hovered && unlocked ? 3 : 2;
+  drawRoundedRect(ctx, frame.x, frame.y, frame.w, frame.h, 18, true, true);
+  ctx.restore();
 
-  thumbs.forEach(t => {
-    const lx = t.cx - thumbW / 2;
-    const rx = t.cx + thumbW / 2;
-    const ty = thumbY;
-    const by = thumbY + thumbH;
+  ctx.save();
+  const water = images['water-bg'];
+  drawRoundedRect(ctx, art.x, art.y, art.w, art.h, 14, false, false);
+  ctx.clip();
+  if (water) {
+    ctx.drawImage(water, 0, 0, water.width, water.height, art.x, art.y, art.w, art.h);
+  } else {
+    ctx.fillStyle = BLUE_LIGHT;
+    ctx.fillRect(art.x, art.y, art.w, art.h);
+  }
+  ctx.restore();
 
-    const unlocked = t.index === 0 || allLevelsUnlockedFromStart || completedLevels[t.index - 1] === true;
+  ctx.save();
+  ctx.strokeStyle = BLUE_MID;
+  ctx.lineWidth = 4;
+  drawRoundedRect(ctx, art.x, art.y, art.w, art.h, 14, false, true);
+  ctx.restore();
 
+  if (hasWaterline) {
     ctx.save();
-    // Inner sea area: clip and draw water-bg instead of solid blue!
-    const waterImg = images['water-bg'];
-    if (waterImg) {
-      drawRoundedRect(ctx, lx, ty, thumbW, thumbH, 12, false, false);
-      ctx.clip();
-      ctx.drawImage(waterImg, 0, 0, waterImg.width, waterImg.height, lx, ty, thumbW, thumbH);
-    } else {
-      ctx.fillStyle = '#4a90c4';
-      drawRoundedRect(ctx, lx, ty, thumbW, thumbH, 12, true, false);
-    }
-    
-    // Draw sea border
-    ctx.strokeStyle = '#2d6b9e';
-    ctx.lineWidth = 4;
-    drawRoundedRect(ctx, lx, ty, thumbW, thumbH, 12, false, true);
+    ctx.strokeStyle = 'rgba(255,255,255,0.78)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(art.x, art.y + art.h / 2);
+    ctx.lineTo(artRight, art.y + art.h / 2);
+    ctx.stroke();
     ctx.restore();
+  }
 
-    // If third level, draw the dashed waterline dividing the top and bottom!
-    if (t.hasLine) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
-      ctx.moveTo(lx, ty + thumbH / 2);
-      ctx.lineTo(rx, ty + thumbH / 2);
-      ctx.stroke();
-      ctx.restore();
-    }
+  const shipImg = images['ship'];
+  if (shipImg) {
+    const shipW = art.w * 0.27;
+    const shipH = shipW * 0.84;
+    const shipX = art.x + art.w * 0.28;
+    const shipY = hasWaterline ? art.y + art.h * 0.28 : art.y + art.h * 0.52;
+    ctx.save();
+    ctx.translate(shipX, shipY);
+    ctx.scale(-1, 1);
+    ctx.drawImage(shipImg, -shipW / 2, -shipH / 2, shipW, shipH);
+    ctx.restore();
+  }
 
-    // Draw the ship inside the thumbnail
-    const shipImg = images['ship'];
-    const shipW = 45;
-    const shipH = 38;
-    const shipX = lx + 30;
-    const shipYLoc = t.hasLine ? ty + thumbH / 4 : ty + thumbH / 2;
-    if (shipImg) {
-      ctx.save();
-      ctx.translate(shipX, shipYLoc);
-      ctx.scale(-1, 1);
-      ctx.drawImage(shipImg, -shipW / 2, -shipH / 2, shipW, shipH);
-      ctx.restore();
-    }
+  const itemPositions = [
+    { x: artRight - art.w * 0.22, y: art.y + art.h * 0.23 },
+    { x: artRight - art.w * 0.22, y: art.y + art.h * 0.52 },
+    { x: artRight - art.w * 0.22, y: artBottom - art.h * 0.18 },
+  ];
+  const itemSize = Math.min(36, art.w * 0.24);
 
-    // Draw the 3 item types inside the thumbnail
-    const itemPositions = [
-      { x: rx - 35, y: ty + 40 },
-      { x: rx - 35, y: ty + thumbH / 2 },
-      { x: rx - 35, y: ty + thumbH - 40 }
-    ];
-
-    t.items.forEach((itemKey, idx) => {
-      const itemImg = images[itemKey];
-      const pos = itemPositions[idx];
-      const itemSize = 34;
-      if (itemImg) {
-        ctx.drawImage(itemImg, pos.x - itemSize / 2, pos.y - itemSize / 2, itemSize, itemSize);
-      }
-    });
-
-    // Draw level label beneath thumbnail
-    ctx.fillStyle = BLUE_DARK;
-    ctx.font = FONT(13, true);
-    ctx.textAlign = 'center';
-    ctx.fillText(t.label, t.cx, by + 25);
-
-    // Lock Overlay if level is locked
-    if (!unlocked) {
-      ctx.save();
-      // Dark translucent rounded rectangle overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      drawRoundedRect(ctx, lx, ty, thumbW, thumbH, 12, true, false);
-
-      // Lock icon
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.font = FONT(32, true);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🔒', t.cx, ty + thumbH / 2);
-      ctx.restore();
-    }
-
-    // Completed Level overlay with a dark rounded rectangle and checkmark
-    if (completedLevels[t.index]) {
-      ctx.save();
-      // Dark translucent rounded rectangle overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-      drawRoundedRect(ctx, lx, ty, thumbW, thumbH, 12, true, false);
-
-      // Checkmark green circle with white checkmark
-      ctx.fillStyle = '#2ecc71';
-      ctx.beginPath();
-      ctx.arc(t.cx, ty + thumbH / 2, 28, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = FONT(32, true);
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('✓', t.cx, ty + thumbH / 2);
-      ctx.restore();
+  itemKeys.forEach((itemKey, index) => {
+    const itemImg = images[itemKey];
+    const point = itemPositions[index];
+    if (itemImg) {
+      ctx.drawImage(itemImg, point.x - itemSize / 2, point.y - itemSize / 2, itemSize, itemSize);
     }
   });
 
-  // Disabled/Enabled treasure button at the bottom
-  const allCompleted = completedLevels.every(c => c === true);
-  const btnW = 500;
-  const btnH = 50;
-  const btnX = 300 - btnW / 2;
-  const btnY = 460;
-
-  ctx.save();
-  if (allCompleted) {
-    // Enabled button: beautiful gold/blue button!
-    ctx.fillStyle = '#e67e22'; // bright orange/gold
-    ctx.strokeStyle = '#d35400';
-    ctx.lineWidth = 3;
-    drawRoundedRect(ctx, btnX, btnY, btnW, btnH, 8, true, true);
-    ctx.fillStyle = '#ffffff';
-  } else {
-    // Disabled button: grey translucent / dull color
-    ctx.fillStyle = 'rgba(100, 100, 100, 0.2)';
-    ctx.strokeStyle = 'rgba(80, 80, 80, 0.4)';
-    ctx.lineWidth = 2;
-    drawRoundedRect(ctx, btnX, btnY, btnW, btnH, 8, true, true);
-    ctx.fillStyle = 'rgba(80, 80, 80, 0.65)';
-  }
-
-  // Button text
-  ctx.font = FONT(14, true);
+  ctx.fillStyle = BLUE_DARK;
+  ctx.font = FONT(13, true);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  
-  const buttonText = allCompleted 
-    ? 'לחצו כאן כדי לקבל את האוצר המסתורי! 🏆' 
-    : 'השלימו את כל 3 השלבים על מנת לקבל את האוצר';
+  ctx.fillText(label, frame.cx, frame.y + frame.h - 16);
 
-  ctx.fillText(buttonText, 300, btnY + btnH / 2);
-  ctx.restore();
+  if (!unlocked) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+    drawRoundedRect(ctx, art.x, art.y, art.w, art.h, 14, true, false);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = FONT(32, true);
+    ctx.fillText('🔒', frame.cx, art.y + art.h / 2 + 2);
+    ctx.restore();
+  }
+
+  if (completed) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
+    drawRoundedRect(ctx, art.x, art.y, art.w, art.h, 14, true, false);
+    ctx.fillStyle = '#2ecc71';
+    ctx.beginPath();
+    ctx.arc(frame.cx, art.y + art.h / 2, 28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = FONT(32, true);
+    ctx.fillText('✓', frame.cx, art.y + art.h / 2 + 1);
+    ctx.restore();
+  }
+}
+
+export function drawStartScreen(ctx, images, layout, hoverTarget) {
+  drawBackground(ctx, images);
+
+  const page = getSharedPageRect(layout);
+  const pageCenterX = page.x + page.w / 2;
+  drawSharedPageShell(ctx, images, page);
+
+  const logo = images['logo'];
+  if (logo) {
+    const logoSize = 116;
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(logo, pageCenterX - logoSize / 2, page.y + 46, logoSize, logoSize);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = BLUE_DARK;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.font = FONT(34, true);
+  ctx.fillText('הפלגת המשובים', pageCenterX, page.y + 205);
+
+  ctx.fillStyle = '#3c2716';
+  ctx.font = FONT(17, true);
+  ctx.fillText('אספו את הפריט הנכון שלוש פעמים ברצף', pageCenterX, page.y + 280);
+
+  ctx.fillStyle = BLUE_MID;
+  ctx.font = FONT(16);
+  ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', pageCenterX, page.y + 322);
+  ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', pageCenterX, page.y + 352);
+
+  drawPrimaryButton(ctx, layout.startButton, 'לחץ להתחלה', hoverTarget?.id === 'start-button');
+}
+
+export function drawLevelSelectScreen(ctx, images, state, layout, hoverTarget) {
+  const completedLevels = state.completedLevels;
+  const allLevelsUnlockedFromStart = state.allLevelsUnlockedFromStart;
+  const page = getSharedPageRect(layout);
+  const pageCenterX = page.x + page.w / 2;
+  const hasSeenReflection = state.hasSeenReflection === true;
+  const treasureDisabled = hasSeenReflection ? false : !completedLevels.every(levelComplete => levelComplete === true);
+  const buttonLabel = hasSeenReflection ? 'בחזרה למסך הסיכום' : 'השלימו את כל 3 השלבים על מנת לקבל את האוצר';
+
+  drawBackground(ctx, images);
+  drawSharedPageShell(ctx, images, page);
+
+  ctx.fillStyle = BLUE_DARK;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = FONT(30, true);
+  ctx.fillText('בחירת שלב', pageCenterX, page.y + 70);
+
+  ctx.fillStyle = '#3c2716';
+  ctx.font = FONT(16, true);
+  ctx.fillText('בכל שלב עליכם לגלות את החוקיות כדי לעבור את השלב', pageCenterX, page.y + 108);
+  ctx.fillText('פתחו שלבים בהדרגה, ואז חזרו לאסוף את האוצר.', pageCenterX, page.y + 136);
+
+  const thumbs = [
+    { index: 0, label: 'שלב 1: משוב תוצאה', items: ['chest-ribbon', 'chest-plain', 'bomb-lit'], hasLine: false },
+    { index: 1, label: 'שלב 2: משוב מתקן', items: ['bomb-unlit', 'chest-green', 'bomb-lit'], hasLine: false },
+    { index: 2, label: 'שלב 3: משוב בונה', items: ['chest-ribbon', 'bomb-unlit', 'bomb-lit'], hasLine: true },
+  ];
+
+  thumbs.forEach((thumb, index) => {
+    const card = layout.levelCards[index];
+    if (!card) return;
+
+    const unlocked = thumb.index === 0 || allLevelsUnlockedFromStart || completedLevels[thumb.index - 1] === true;
+    const hovered = hoverTarget?.id === `level-${thumb.index}`;
+
+    drawLevelCard(
+      ctx,
+      images,
+      card,
+      thumb.label,
+      thumb.items,
+      thumb.hasLine,
+      unlocked,
+      completedLevels[thumb.index],
+      hovered,
+    );
+  });
+
+  drawPrimaryButton(
+    ctx,
+    layout.treasureButton,
+    buttonLabel,
+    hoverTarget?.id === 'treasure-button',
+    treasureDisabled,
+  );
 }
 
 export function drawTreasureWinScreen(ctx, images) {
@@ -519,5 +577,21 @@ export function drawTreasureWinScreen(ctx, images) {
   ctx.fillStyle = '#ffffff';
   ctx.font = FONT(14, true);
   ctx.fillText('שחקו שוב ↩', cx, btnY + btnH / 2);
+  ctx.restore();
+}
+
+
+export function drawPauseOverlay(ctx) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(10, 26, 46, 0.72)';
+  ctx.fillRect(0, 0, 680, 680);
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 30px \'Rubik\', Arial, sans-serif';
+  ctx.fillText('משחק מושהה ⏸', 340, 320);
+  ctx.font = '15px \'Rubik\', Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ctx.fillText('לחצו על מקש חץ כלשהו או על המסך כדי להמשיך', 340, 365);
   ctx.restore();
 }

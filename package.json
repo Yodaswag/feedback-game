@@ -1,6 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:v3": "node --test v3/tests/*.test.mjs"
   }
 }

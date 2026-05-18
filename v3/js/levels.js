@@ -53,12 +53,12 @@ const LEVELS = [
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(item, correct) {
       if (correct) return 'נכון! פצצה כבויה — בטוח לאסוף.';
-      if (item.type === ITEM.CHEST_GREEN) return 'שגיאה! תיבה ירוק — מלכודת.';
+      if (item.type === ITEM.CHEST_GREEN) return 'שגיאה! תיבה ירוקה — מלכודת.';
       if (item.type === ITEM.BOMB_LIT) return 'שגיאה! פצצה דולקת — מסוכנת!';
       return 'שגיאה!';
     },
     transitionReveal:
-      ' כל הארגזים הירוקים מסוכנים. פצצות דולקות — סכנה. פצצות כבויות — בטוח לאסוף.',
+      ' כל התיבות הירוקות מסוכנות. פצצות דולקות — סכנה. פצצות כבויות — בטוח לאסוף.',
     moodQuestion: 'איך הרגשת לעומת השלב הקודם?',
     nextLevelIntro: 'בשלב הבא תקבל הסבר מלא — כולל למה ואיך להצליח.',
   },
@@ -91,9 +91,9 @@ const LEVELS = [
     isHazard(item) { return item.type === ITEM.BOMB_LIT; },
     getFeedbackText(item, correct) {
       if (item.type === ITEM.CHEST_RIBBON && correct)
-        return 'מצוין! תיבה מעל קו המים — כלל: תיבה צף מעל = אוצר אמיתי. חפש תיבות בחצי העליון!';
+        return 'מצוין! תיבה מעל קו המים — כלל: תיבה צפה מעל = תיבת אוצר אמיתית. חפשו תיבות בחצי העליון!';
       if (item.type === ITEM.CHEST_RIBBON && !correct)
-        return 'טעות! הארגז היה מתחת לקו המים — שם הוא מלכודת. כלל: תיבה מעל קו המים בלבד!';
+        return 'טעות! התיבה הייתה מתחת לקו המים — שם היא מלכודת. כלל: תיבה מעל קו המים בלבד!';
       if (item.type === ITEM.BOMB_UNLIT && correct)
         return 'נהדר! פצצה כבויה מתחת לקו המים — שם היא בטוחה לאיסוף. כלל: פצצה בחצי התחתון = בטוח!';
       if (item.type === ITEM.BOMB_UNLIT && !correct)
@@ -103,7 +103,7 @@ const LEVELS = [
       return '';
     },
     transitionReveal:
-      ' מעל קו המים — תיבה בטוח, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, תיבה מלכודת. המיקום קובע הכל!',
+      ' מעל קו המים — תיבה בטוחה, פצצה מסוכנת. מתחת לקו המים — פצצה כבויה בטוחה, תיבה מלכודת. המיקום קובע הכל!',
     moodQuestion: 'איך הרגשת לעומת השלבים הקודמים?',
     nextLevelIntro: null,
   },

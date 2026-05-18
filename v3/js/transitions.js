@@ -6,7 +6,7 @@ const FONT = (size, bold = false) => `${bold ? 'bold ' : ''}${size}px 'Rubik', A
 const BLUE_DARK = '#1a3f6f';
 const BLUE_MID = '#2d6b9e';
 
-function drawButton(ctx, label, x, y, w, h, highlight) {
+function drawButton(ctx, label, x, y, w, h, highlight, action = label) {
   ctx.fillStyle = highlight ? BLUE_MID : 'rgba(45,107,158,0.18)';
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, 10);
@@ -19,7 +19,7 @@ function drawButton(ctx, label, x, y, w, h, highlight) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label, x + w / 2, y + h / 2);
-  activeButtons.push({ label, rect: { x, y, w, h } });
+  activeButtons.push({ action, rect: { x, y, w, h } });
 }
 
 function drawPirate(ctx, images, mood, cx, cy, size) {
@@ -262,10 +262,14 @@ function moodLabelToKey(label) {
 }
 
 export function handleClick(x, y) {
+  const actionByLabel = {
+    '×”×ž×©×š â†': 'reveal-continue',
+    '×©×—×§ ×©×•×‘': 'end-restart',
+  };
   for (const btn of activeButtons) {
     const { rect } = btn;
     if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
-      return btn.label;
+      return btn.action ?? actionByLabel[btn.label] ?? btn.label;
     }
   }
   return null;

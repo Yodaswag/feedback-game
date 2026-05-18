@@ -10,31 +10,114 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 12px;
+  font-family: 'Rubik', Arial, sans-serif;
 }
 
 #game-wrapper {
   position: relative;
-  width: 600px;
-  height: 600px;
+  width: min(680px, calc(100vw - 24px), calc(100vh - 24px));
+  height: min(680px, calc(100vw - 24px), calc(100vh - 24px));
 }
 
 #game-canvas {
   display: block;
-  width: 600px;
-  height: 600px;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  #game-wrapper {
+    width: min(680px, calc(100vw - 16px), calc(100vh - 16px));
+    height: min(680px, calc(100vw - 16px), calc(100vh - 16px));
+  }
+}
+
+.utility-cluster {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.utility-btn,
+.speed-tray {
+  font-family: 'Rubik', Arial, sans-serif;
+  pointer-events: auto;
+}
+
+.utility-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid rgba(26, 63, 111, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a3f6f;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(10, 26, 46, 0.15);
+  transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.utility-btn:hover {
+  transform: scale(1.08);
+  background: #ffffff;
+  box-shadow: 0 6px 12px rgba(10, 26, 46, 0.22);
+}
+
+.utility-btn:active {
+  transform: scale(0.96);
+}
+
+.utility-btn.hidden {
+  display: none !important;
+}
+
+.speed-tray {
+  position: absolute;
+  top: 108px; /* positioned right next to speedBtn in the column */
+  left: 0px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 200px;
+  padding: 0.5rem 0.85rem;
+  border: 2px solid rgba(26, 63, 111, 0.25);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #1a3f6f;
+  box-shadow: 0 10px 20px rgba(10, 26, 46, 0.18);
+  z-index: 4;
+}
+
+.speed-tray.hidden {
+  display: none !important;
+}
+
+.speed-symbol {
+  font-size: 16px;
+}
+
+.speed-tray input[type="range"] {
+  flex-grow: 1;
+  accent-color: #2d6b9e;
   cursor: pointer;
 }
 
-@media (max-width: 640px) {
-  #game-wrapper {
-    width: 100vw;
-    height: 100vw;
-  }
-  #game-canvas {
-    width: 100%;
-    height: 100%;
-  }
+.speed-tray #speedValue {
+  font-weight: 700;
+  font-size: 13px;
+  min-width: 2.2rem;
+  text-align: center;
 }
 
 /* Mood overlay — sits on top of canvas */

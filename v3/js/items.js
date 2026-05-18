@@ -20,7 +20,32 @@ export function pickItemType(spawnPool, ctx = {}) {
     incorrectStreak    = 0,
     level              = null,
     random             = Math.random,
+    levelElapsedMs     = 0,
   } = ctx;
+
+  // Assist Mode after 50 seconds:
+  const LEVEL_ASSIST_DELAY_MS = 50000;
+  const ASSIST_CORRECT_WEIGHT = 0.78;
+  const ASSIST_WRONG_EDGE_HEIGHT = 84;
+  const ASSIST_WRONG_EDGE_MIN_Y = ITEM_SPAWN_MAX_Y - ASSIST_WRONG_EDGE_HEIGHT;
+
+  if (levelElapsedMs >= LEVEL_ASSIST_DELAY_MS && level) {
+    const correctOptions = level.correctSpawnOptions ?? [];
+    const wrongOptions = spawnPool.filter(entry => !correctOptions.some(opt => opt.type === entry.type));
+
+    if (random() < ASSIST_CORRECT_WEIGHT && correctOptions.length > 0) {
+      const forced = correctOptions[Math.floor(random() * correctOptions.length)];
+      return { type: forced.type, yRange: forced.yRange };
+    }
+
+    if (wrongOptions.length > 0) {
+      const wrong = wrongOptions[Math.floor(random() * wrongOptions.length)];
+      return {
+        type: wrong.type,
+        yRange: [ASSIST_WRONG_EDGE_MIN_Y, ITEM_SPAWN_MAX_Y],
+      };
+    }
+  }
 
   if (incorrectStreak >= MAX_INCORRECT_STREAK
       && level && level.correctSpawnOptions && level.correctSpawnOptions.length > 0) {

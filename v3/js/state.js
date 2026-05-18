@@ -5,6 +5,7 @@ import {
 export function createInitialState(allUnlocked = false) {
   return {
     phase: PHASE.START,
+    hoverTarget: { id: 'none' },
     levelIndex: 0,
     consecutiveCount: 0,
     shipY: 300,
@@ -21,6 +22,11 @@ export function createInitialState(allUnlocked = false) {
     floodTriggered: false,
     completedLevels: [false, false, false],
     allLevelsUnlockedFromStart: allUnlocked,
+    isPaused: false,
+    pausedFromPhase: null,
+    levelElapsedMs: 0,
+    speedMultiplier: 1,
+    hasSeenReflection: false,
   };
 }
 
@@ -33,13 +39,14 @@ export function isLevelUnlocked(state, index) {
 }
 
 export function startGame(state) {
-  return { ...state, phase: PHASE.LEVEL_SELECT };
+  return { ...state, phase: PHASE.LEVEL_SELECT, hoverTarget: { id: 'none' } };
 }
 
 export function selectLevel(state, levelIndex) {
   return {
     ...state,
     phase: PHASE.PLAYING,
+    hoverTarget: { id: 'none' },
     levelIndex: levelIndex,
     consecutiveCount: 0,
     items: [],
@@ -51,13 +58,18 @@ export function selectLevel(state, levelIndex) {
     incorrectStreak: 0,
     avoidanceTimer: 0,
     floodTriggered: false,
+    levelElapsedMs: 0,
+    isPaused: false,
+    pausedFromPhase: null,
   };
 }
 
 export function winTreasure(state) {
   return {
     ...state,
-    phase: PHASE.TREASURE_WIN
+    phase: PHASE.END,
+    hoverTarget: { id: 'none' },
+    hasSeenReflection: true,
   };
 }
 
@@ -109,6 +121,10 @@ export function tickPopup(state, deltaMs) {
   if (remaining > 0) {
     return { ...state, popupTimer: remaining };
   }
+  return dismissPopup(state);
+}
+
+export function dismissPopup(state) {
   const isLevelComplete = state.consecutiveCount >= CONSECUTIVE_TO_WIN;
   return {
     ...state,
@@ -142,6 +158,7 @@ export function advanceLevel(state) {
   return {
     ...state,
     phase: PHASE.LEVEL_SELECT,
+    hoverTarget: { id: 'none' },
     completedLevels: completed,
     consecutiveCount: 0,
     items: [],
@@ -153,6 +170,9 @@ export function advanceLevel(state) {
     incorrectStreak: 0,
     avoidanceTimer: 0,
     floodTriggered: false,
+    levelElapsedMs: 0,
+    isPaused: false,
+    pausedFromPhase: null,
     levelResults: [
       ...state.levelResults,
       { levelIndex: state.levelIndex, mood: state.transition?.playerMood ?? null },
@@ -189,5 +209,37 @@ export function appendItems(state, newItems) {
     ...state,
     items: [...state.items, ...newItems],
     nextItemId: state.nextItemId + newItems.length,
+  };
+}
+
+export function setHoverTarget(state, hoverTarget) {
+  return { ...state, hoverTarget };
+}
+
+export function setPaused(state, paused) {
+  if (paused) {
+    return { ...state, isPaused: true, pausedFromPhase: state.phase };
+  }
+  return resumeFromPause(state);
+}
+
+export function resumeFromPause(state) {
+  return {
+    ...state,
+    isPaused: false,
+    pausedFromPhase: null,
+  };
+}
+
+export function tickLevelTimer(state, deltaMs) {
+  return { ...state, levelElapsedMs: state.levelElapsedMs + deltaMs };
+}
+
+export function setSpeedMultiplier(state, speedMultiplier) {
+  const MIN_SPEED_MULTIPLIER = 0.5;
+  const MAX_SPEED_MULTIPLIER = 3;
+  return {
+    ...state,
+    speedMultiplier: Math.max(MIN_SPEED_MULTIPLIER, Math.min(MAX_SPEED_MULTIPLIER, speedMultiplier)),
   };
 }

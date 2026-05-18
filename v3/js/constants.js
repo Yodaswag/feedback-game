@@ -1,4 +1,5 @@
-export const CANVAS_SIZE = 600;
+export const CANVAS_SIZE = 680;
+export const UI_PROXIMITY_PAD = 24;
 
 // Water strip: background-texture fills canvas, water-bg drawn on top from this Y down
 export const WATER_Y_TOP = 80;
@@ -81,3 +82,9 @@ export const FLOOD_DELAY_MS     = 30000;
 export const FLOOD_ITEM_COUNT   = 7;
 export const FLOOD_Y_JITTER     = 16;
 export const FLOOD_X_STAGGER    = 90;  // px gap between sequential flood items on X axis
+
+// --- 50-Second Assist Mode ---
+export const LEVEL_ASSIST_DELAY_MS = 50000;
+export const ASSIST_CORRECT_WEIGHT = 0.78;
+export const ASSIST_WRONG_EDGE_HEIGHT = 84;
+export const ASSIST_WRONG_EDGE_MIN_Y = ITEM_SPAWN_MAX_Y - ASSIST_WRONG_EDGE_HEIGHT;

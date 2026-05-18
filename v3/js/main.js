@@ -1,9 +1,24 @@
-import { PHASE, TRANSITION_STEP, SHIP_X, SHIP_WIDTH, SHIP_HEIGHT,
-         ITEM_SPEED, ITEM_SPAWN_INTERVAL, SHIP_SPEED, POPUP_DURATION,
-         CANVAS_SIZE, ITEM_HITBOX_RATIO, ITEM_WIDTH,
-         ITEM_SPAWN_MIN_Y, ITEM_SPAWN_MAX_Y,
-         NUDGE_DELAY_MS, FLOOD_DELAY_MS, FLOOD_ITEM_COUNT, FLOOD_Y_JITTER,
-         FLOOD_X_STAGGER } from './constants.js';
+import {
+  PHASE,
+  TRANSITION_STEP,
+  SHIP_X,
+  SHIP_WIDTH,
+  SHIP_HEIGHT,
+  ITEM_SPEED,
+  ITEM_SPAWN_INTERVAL,
+  SHIP_SPEED,
+  POPUP_DURATION,
+  CANVAS_SIZE,
+  ITEM_HITBOX_RATIO,
+  ITEM_WIDTH,
+  ITEM_SPAWN_MIN_Y,
+  ITEM_SPAWN_MAX_Y,
+  NUDGE_DELAY_MS,
+  FLOOD_DELAY_MS,
+  FLOOD_ITEM_COUNT,
+  FLOOD_Y_JITTER,
+  FLOOD_X_STAGGER,
+} from './constants.js';
 import LEVELS from './levels.js';
 import * as State from './state.js';
 import * as Assets from './assets.js';
@@ -12,16 +27,30 @@ import { pickItemType, createItem, createItemAt, checkCollision } from './items.
 import * as Renderer from './renderer.js';
 import * as Feedback from './feedback.js';
 import * as Transitions from './transitions.js';
+import {
+  createCanvasLayout,
+  getCursorForTarget,
+  resolveCanvasTarget,
+  toCanvasPoint,
+} from './ui.js';
+import { createAudioController } from './audio.js';
+
+const audio = createAudioController();
+
+// Arm audio controller on first click/keydown to bypass browser autoplay policy
+document.addEventListener('click', () => audio.arm(), { once: true });
+document.addEventListener('keydown', () => audio.arm(), { once: true });
 
 function isCorrectType(level, type) {
-  return level.correctSpawnOptions?.some(o => o.type === type) ?? false;
+  return level.correctSpawnOptions?.some(option => option.type === type) ?? false;
 }
 
 function spawnContext(state, level) {
   return {
     recentSpawnHistory: state.recentSpawnHistory,
-    incorrectStreak:    state.incorrectStreak,
+    incorrectStreak: state.incorrectStreak,
     level,
+    levelElapsedMs: state.levelElapsedMs,
   };
 }
 
@@ -31,41 +60,127 @@ function floodSpawn(state, level) {
   const span = maxY - minY;
   const slot = span / (FLOOD_ITEM_COUNT - 1);
 
-  // Shuffle Y-slot order so item types don't correlate with vertical position.
-  const order = Array.from({ length: FLOOD_ITEM_COUNT }, (_, i) => i);
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
+  const order = Array.from({ length: FLOOD_ITEM_COUNT }, (_, index) => index);
+  for (let index = order.length - 1; index > 0; index--) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [order[index], order[swapIndex]] = [order[swapIndex], order[index]];
   }
 
   const baseX = CANVAS_SIZE + ITEM_WIDTH / 2;
   const newItems = [];
   let working = state;
-  for (let i = 0; i < FLOOD_ITEM_COUNT; i++) {
+
+  for (let index = 0; index < FLOOD_ITEM_COUNT; index++) {
     const pick = pickItemType(level.spawnPool, spawnContext(working, level));
-    const slotIdx = order[i];
-    const baseY = minY + slotIdx * slot;
+    const slotIndex = order[index];
+    const baseY = minY + slotIndex * slot;
     const jitter = (Math.random() * 2 - 1) * FLOOD_Y_JITTER;
     let y = Math.round(baseY + jitter);
     if (pick.yRange) {
       y = Math.max(pick.yRange[0], Math.min(pick.yRange[1], y));
     }
     y = Math.max(minY, Math.min(maxY, y));
-    const x = baseX + i * FLOOD_X_STAGGER;
-    const item = createItemAt(working.nextItemId + i, pick.type, y);
-    item.x = x;
+
+    const item = createItemAt(working.nextItemId + index, pick.type, y);
+    item.x = baseX + index * FLOOD_X_STAGGER;
     newItems.push(item);
     working = State.recordSpawn(working, pick.type, isCorrectType(level, pick.type));
   }
+
   return State.setFloodTriggered(State.appendItems(working, newItems));
 }
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
+const layout = createCanvasLayout(CANVAS_SIZE);
 
 let state = State.createInitialState();
 let lastTimestamp = null;
 let moodOverlayVisible = false;
+
+// Register utility cluster event listeners
+const pauseBtn = document.getElementById('pauseBtn');
+const muteBtn = document.getElementById('muteBtn');
+const speedBtn = document.getElementById('speedBtn');
+const speedTray = document.getElementById('speedTray');
+const speedSlider = document.getElementById('speedSlider');
+const speedValue = document.getElementById('speedValue');
+
+if (pauseBtn) {
+  pauseBtn.addEventListener('click', () => {
+    state = State.setPaused(state, !state.isPaused);
+    if (state.isPaused) {
+      audio.play('pause-open');
+      pauseBtn.textContent = '▶';
+    } else {
+      audio.play('pause-close');
+      pauseBtn.textContent = '⏸';
+    }
+  });
+}
+
+if (muteBtn) {
+  muteBtn.addEventListener('click', () => {
+    const muted = audio.toggleMute();
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+}
+
+if (speedBtn) {
+  speedBtn.addEventListener('click', () => {
+    if (speedTray) {
+      speedTray.classList.toggle('hidden');
+    }
+  });
+}
+
+if (speedSlider) {
+  speedSlider.addEventListener('input', () => {
+    const val = parseFloat(speedSlider.value);
+    state = State.setSpeedMultiplier(state, val);
+    if (speedValue) {
+      speedValue.textContent = `×${val.toFixed(1)}`;
+    }
+  });
+}
+
+// Proximity checker to auto-close the speed tray when cursor leaves it
+window.addEventListener('pointermove', event => {
+  if (speedTray && speedBtn && !speedTray.classList.contains('hidden')) {
+    const rect = speedTray.getBoundingClientRect();
+    const btnRect = speedBtn.getBoundingClientRect();
+    const pad = 24;
+    
+    const xMin = Math.min(rect.left, btnRect.left) - pad;
+    const xMax = Math.max(rect.right, btnRect.right) + pad;
+    const yMin = Math.min(rect.top, btnRect.top) - pad;
+    const yMax = Math.max(rect.bottom, btnRect.bottom) + pad;
+
+    const x = event.clientX;
+    const y = event.clientY;
+
+    if (x < xMin || x > xMax || y < yMin || y > yMax) {
+      speedTray.classList.add('hidden');
+    }
+  }
+});
+
+function clearCanvasHover() {
+  state = State.setHoverTarget(state, { id: 'none' });
+  canvas.style.cursor = 'default';
+}
+
+function syncCanvasHover(event) {
+  if (state.phase !== PHASE.START && state.phase !== PHASE.LEVEL_SELECT && state.phase !== PHASE.FEEDBACK) {
+    clearCanvasHover();
+    return;
+  }
+
+  const point = toCanvasPoint(event, canvas, CANVAS_SIZE);
+  const hoverTarget = resolveCanvasTarget(layout, state, point.x, point.y);
+  state = State.setHoverTarget(state, hoverTarget);
+  canvas.style.cursor = getCursorForTarget(hoverTarget);
+}
 
 function initMoodOverlay() {
   const submitBtn = document.getElementById('mood-submit-btn');
@@ -73,7 +188,8 @@ function initMoodOverlay() {
 
   faceBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      faceBtns.forEach(b => b.classList.remove('selected'));
+      audio.play('button-click');
+      faceBtns.forEach(faceBtn => faceBtn.classList.remove('selected'));
       btn.classList.add('selected');
       document.getElementById('mood-selected-display').textContent = btn.getAttribute('aria-label');
       submitBtn.disabled = false;
@@ -81,6 +197,7 @@ function initMoodOverlay() {
   });
 
   submitBtn.addEventListener('click', () => {
+    audio.play('button-click');
     const selected = document.querySelector('#mood-overlay .face-choice.selected');
     if (!selected) return;
     hideMoodOverlay();
@@ -92,7 +209,7 @@ function initMoodOverlay() {
 function showMoodOverlay(level) {
   document.getElementById('mood-title').textContent = `שלב ${level.index + 1} הושלם!`;
   document.getElementById('mood-question').textContent = level.moodQuestion;
-  document.querySelectorAll('#mood-overlay .face-choice').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#mood-overlay .face-choice').forEach(btn => btn.classList.remove('selected'));
   document.getElementById('mood-selected-display').textContent = '';
   document.getElementById('mood-submit-btn').disabled = true;
   document.getElementById('mood-overlay').classList.remove('hidden');
@@ -105,16 +222,31 @@ function hideMoodOverlay() {
 }
 
 function update(deltaMs) {
+  // Sync the pauseBtn visibility based on the phase
+  if (pauseBtn) {
+    if (state.phase === PHASE.PLAYING) {
+      pauseBtn.classList.remove('hidden');
+    } else {
+      pauseBtn.classList.add('hidden');
+    }
+  }
+
+  // Freeze updates if paused
+  if (state.isPaused) return;
+
   if (state.phase === PHASE.PLAYING) {
-    const dy = Input.getShipDelta() * SHIP_SPEED;
+    state = State.tickLevelTimer(state, deltaMs);
+
+    const dy = Input.getShipDelta() * SHIP_SPEED * state.speedMultiplier;
     if (dy !== 0) state = State.moveShip(state, dy);
 
-    const deltaX = ITEM_SPEED * (deltaMs / 16.67);
+    const deltaX = ITEM_SPEED * (deltaMs / 16.67) * state.speedMultiplier;
     state = State.updateItems(state, deltaX);
 
-    state = State.tickSpawnTimer(state, deltaMs);
-    state = State.tickAvoidance(state, deltaMs);
+    state = State.tickSpawnTimer(state, deltaMs * state.speedMultiplier);
+    state = State.tickAvoidance(state, deltaMs * state.speedMultiplier);
     const levelForSpawn = LEVELS[state.levelIndex];
+
     if (state.spawnTimer <= 0) {
       const pick = pickItemType(levelForSpawn.spawnPool, spawnContext(state, levelForSpawn));
       const item = createItem(state.nextItemId, pick.type, pick.yRange, state.items);
@@ -130,28 +262,40 @@ function update(deltaMs) {
     const level = LEVELS[state.levelIndex];
     const ship = { x: SHIP_X, y: state.shipY, width: SHIP_WIDTH, height: SHIP_HEIGHT };
     for (const item of state.items) {
-      // Use reduced hitbox for collectibles (ITEM_HITBOX_RATIO of visual size)
       const itemHitbox = {
         ...item,
-        width:  item.width  * ITEM_HITBOX_RATIO,
+        width: item.width * ITEM_HITBOX_RATIO,
         height: item.height * ITEM_HITBOX_RATIO,
       };
-      if (checkCollision(ship, itemHitbox)) {
-        const correct = level.isCorrect(item);
-        const hazard  = level.isHazard(item);
-        const isCorrect = correct && !hazard;
-        const text = level.getFeedbackText(item, correct);
-        const duration = POPUP_DURATION[level.feedbackType];
+      if (!checkCollision(ship, itemHitbox)) continue;
 
-        state = State.collectItem(state, item.id, isCorrect);
-        state = State.showPopup(state, text, isCorrect, duration);
-        break;
+      const correct = level.isCorrect(item);
+      const hazard = level.isHazard(item);
+      const itemIsCorrect = correct && !hazard;
+      const text = level.getFeedbackText(item, correct);
+      const duration = POPUP_DURATION[level.feedbackType];
+
+      if (itemIsCorrect) {
+        audio.play('collect-correct');
+      } else {
+        audio.play('collect-wrong');
       }
+
+      const nextState = State.collectItem(state, item.id, itemIsCorrect);
+      
+      // Play level complete if consecutive count reached win limit
+      const nextConsecCount = nextState.consecutiveCount;
+      if (nextConsecCount >= 3) {
+        audio.play('level-complete');
+      }
+
+      state = State.showPopup(nextState, text, itemIsCorrect, duration);
+      break;
     }
   }
 
   if (state.phase === PHASE.FEEDBACK) {
-    state = State.tickPopup(state, deltaMs);
+    state = State.tickPopup(state, deltaMs * state.speedMultiplier);
   }
 }
 
@@ -161,11 +305,11 @@ function render() {
 
   switch (state.phase) {
     case PHASE.START:
-      Renderer.drawStartScreen(ctx, Assets.images);
+      Renderer.drawStartScreen(ctx, Assets.images, layout, state.hoverTarget);
       break;
 
     case PHASE.LEVEL_SELECT:
-      Renderer.drawLevelSelectScreen(ctx, Assets.images, state);
+      Renderer.drawLevelSelectScreen(ctx, Assets.images, state, layout, state.hoverTarget);
       break;
 
     case PHASE.PLAYING:
@@ -181,7 +325,10 @@ function render() {
         Renderer.drawAvoidanceNudge(ctx, Assets.images);
       }
       if (state.phase === PHASE.FEEDBACK && state.activePopup) {
-        Feedback.drawPopup(ctx, Assets.images, state.activePopup);
+        Feedback.drawPopup(ctx, Assets.images, state.activePopup, state.hoverTarget);
+      }
+      if (state.isPaused) {
+        Renderer.drawPauseOverlay(ctx);
       }
       break;
 
@@ -190,16 +337,11 @@ function render() {
       if (state.transition.step === TRANSITION_STEP.REVEAL) {
         Transitions.drawRevealScreen(ctx, Assets.images, level);
       }
-      // MOOD step: DOM overlay handles UI, canvas shows background only
       break;
 
     case PHASE.END:
       Renderer.drawBackground(ctx, Assets.images);
       Transitions.drawEndScreen(ctx, Assets.images, state.levelResults);
-      break;
-
-    case PHASE.TREASURE_WIN:
-      Renderer.drawTreasureWinScreen(ctx, Assets.images);
       break;
   }
 }
@@ -221,74 +363,90 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-document.addEventListener('keydown', Input.onKeyDown);
+document.addEventListener('keydown', event => {
+  if (state.isPaused) {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      state = State.setPaused(state, false);
+      audio.play('pause-close');
+      if (pauseBtn) {
+        pauseBtn.textContent = '⏸';
+      }
+      event.preventDefault();
+      return;
+    }
+  }
+  Input.onKeyDown(event);
+});
+
 document.addEventListener('keyup', Input.onKeyUp);
+canvas.addEventListener('pointermove', syncCanvasHover);
+canvas.addEventListener('mouseleave', clearCanvasHover);
 
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = CANVAS_SIZE / rect.width;
-  const scaleY = CANVAS_SIZE / rect.height;
-  const x = (e.clientX - rect.left) * scaleX;
-  const y = (e.clientY - rect.top)  * scaleY;
+canvas.addEventListener('click', event => {
+  const { x, y } = toCanvasPoint(event, canvas, CANVAS_SIZE);
 
-  if (state.phase === PHASE.START) {
-    state = State.startGame(state);
+  if (state.isPaused) {
+    state = State.setPaused(state, false);
+    audio.play('pause-close');
+    if (pauseBtn) {
+      pauseBtn.textContent = '⏸';
+    }
     return;
   }
 
-  if (state.phase === PHASE.LEVEL_SELECT) {
-    const thumbY = 150;
-    const thumbH = 180;
-    
-    // Check level selection thumbnails clicks
-    if (y >= thumbY && y <= thumbY + thumbH) {
-      // Level 1: Right (x: 400 to 540)
-      if (x >= 400 && x <= 540) {
-        state = State.selectLevel(state, 0);
-        return;
-      }
-      // Level 2: Center (x: 230 to 370)
-      if (x >= 230 && x <= 370 && State.isLevelUnlocked(state, 1)) {
-        state = State.selectLevel(state, 1);
-        return;
-      }
-      // Level 3: Left (x: 60 to 200)
-      if (x >= 60 && x <= 200 && State.isLevelUnlocked(state, 2)) {
-        state = State.selectLevel(state, 2);
-        return;
-      }
-    }
-
-    // Check click for disabled/enabled treasure button (x: 50 to 550, y: 460 to 510)
-    const allCompleted = state.completedLevels.every(c => c === true);
-    if (allCompleted && x >= 50 && x <= 550 && y >= 460 && y <= 510) {
-      state = State.winTreasure(state);
+  if (state.phase === PHASE.START || state.phase === PHASE.LEVEL_SELECT) {
+    const target = resolveCanvasTarget(layout, state, x, y);
+    if (target.id === 'start-button') {
+      audio.play('button-click');
+      state = State.startGame(state);
+      clearCanvasHover();
       return;
+    }
+    if (target.id === 'treasure-button' && state.completedLevels.every(levelComplete => levelComplete === true)) {
+      audio.play('treasure-win');
+      state = State.winTreasure(state);
+      clearCanvasHover();
+      return;
+    }
+    if (/^level-\d+$/.test(target.id)) {
+      audio.play('button-click');
+      state = State.selectLevel(state, target.levelIndex);
+      clearCanvasHover();
+    }
+    return;
+  }
+
+  if (state.phase === PHASE.FEEDBACK) {
+    const target = resolveCanvasTarget(layout, state, x, y);
+    if (target.id === 'feedback-close') {
+      audio.play('button-click');
+      state = State.dismissPopup(state);
+      clearCanvasHover();
     }
     return;
   }
 
   if (state.phase === PHASE.TRANSITION && state.transition?.step === TRANSITION_STEP.REVEAL) {
-    const action = Transitions.handleClick(x, y);
-    if (action === 'המשך ←') state = State.advanceTransition(state);
-    return;
-  }
-
-  if (state.phase === PHASE.END) {
-    const action = Transitions.handleClick(x, y);
-    if (action === 'שחק שוב') {
-      state = State.createInitialState(true);
-      state = State.startGame(state);
+    const clicked = Transitions.handleClick(x, y);
+    if (clicked === 'reveal-continue' || clicked === 'המשך ←') {
+      audio.play('button-click');
+      state = State.advanceTransition(state);
     }
     return;
   }
 
-  if (state.phase === PHASE.TREASURE_WIN) {
-    // Check play again button inside treasure win card
-    // Button is at btnX = 300 - 90 = 210, width = 180, btnY = 30 + 450 = 480, height = 42
-    if (x >= 210 && x <= 390 && y >= 480 && y <= 522) {
-      state = State.createInitialState(true);
-      state = State.startGame(state);
+  if (state.phase === PHASE.END) {
+    const clicked = Transitions.handleClick(x, y);
+    if (clicked === 'end-restart' || clicked === 'שחק שוב') {
+      audio.play('button-click');
+      state = {
+        ...state,
+        phase: PHASE.LEVEL_SELECT,
+        completedLevels: [true, true, true],
+        hasSeenReflection: true,
+        hoverTarget: { id: 'none' }
+      };
+      clearCanvasHover();
     }
     return;
   }
@@ -296,7 +454,6 @@ canvas.addEventListener('click', (e) => {
 
 initMoodOverlay();
 
-// Wait for both assets and Rubik font before starting loop
 Promise.all([Assets.load(), document.fonts.ready])
   .then(() => requestAnimationFrame(loop))
   .catch(err => {

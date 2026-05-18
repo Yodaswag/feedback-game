@@ -12,7 +12,17 @@
 </head>
 <body>
   <div id="game-wrapper">
-    <canvas id="game-canvas" width="600" height="600"></canvas>
+    <canvas id="game-canvas" width="680" height="680"></canvas>
+    <div id="utility-cluster" class="utility-cluster">
+      <button id="pauseBtn" class="utility-btn" type="button" aria-label="השהיה">⏸</button>
+      <button id="muteBtn" class="utility-btn" type="button" aria-label="השתק">🔊</button>
+      <button id="speedBtn" class="utility-btn" type="button" aria-label="מהירות">⚡</button>
+      <div id="speedTray" class="speed-tray hidden">
+        <span class="speed-symbol">⚡</span>
+        <input id="speedSlider" type="range" min="0.5" max="3" step="0.1" value="1.0">
+        <span id="speedValue">×1.0</span>
+      </div>
+    </div>
     <div id="mood-overlay" class="ui-layer hidden">
       <div class="ui-box screen-center ui-overlay">
         <h2 id="mood-title" class="title-lg"></h2>
