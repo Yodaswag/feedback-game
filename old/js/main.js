@@ -81,7 +81,8 @@ const fbText = document.getElementById('fbText');
 const fbIcon = document.getElementById('fbIcon');
 const fbTag = document.getElementById('fbTag');
 const feedbackCloseBtn = document.getElementById('feedbackCloseBtn');
-const modeExplanation = document.getElementById('modeExplanation');
+const explanationTitle = document.getElementById('explanationTitle');
+const explanationText = document.getElementById('explanationText');
 const overlayStartBtn = document.getElementById('overlayStartBtn');
 const spotlightStartHint = document.getElementById('spotlightStartHint');
 const modeSpotlight = document.getElementById('modeSpotlight');
@@ -213,11 +214,13 @@ function setMode(mode) {
     card.classList.toggle('active', m === mode);
     card.classList.toggle('spotlight-target', !hasSelectedInitialMode);
   }
-  modeExplanation.textContent = MODE_META[mode].explanation;
+  if (explanationTitle) explanationTitle.textContent = `מה זה ${MODE_META[mode].label}?`;
+  if (explanationText) explanationText.textContent = MODE_META[mode].explanation;
 }
 
 function showModeSelectionPrompt() {
-  modeExplanation.textContent = 'בחרו אחד מסוגי המשוב כדי להתחיל, ואז נסו להשלים בכל כרטיס גם אוצר וגם מכשול.';
+  if (explanationTitle) explanationTitle.textContent = 'הסבר סוגי משוב';
+  if (explanationText) explanationText.textContent = 'בחרו אחד מסוגי המשוב כדי להתחיל, ואז נסו להשלים בכל כרטיס גם אוצר וגם מכשול.';
   for (const m of Object.keys(MODE_META)) {
     const card = document.getElementById(`mode-${m}`);
     if (!card) continue;

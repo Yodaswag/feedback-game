@@ -93,6 +93,15 @@ canvas {
     filter: saturate(1);
 }
 
+.type-card .checklist-icon {
+    filter: grayscale(100%) opacity(40%);
+    transition: all 0.2s ease;
+}
+
+.type-card.active .checklist-icon {
+    filter: none;
+}
+
 .feedback-bubble {
     animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
