@@ -437,7 +437,7 @@ export function drawStartScreen(ctx, images, layout, hoverTarget) {
   ctx.textBaseline = 'middle';
 
   ctx.font = FONT(34, true);
-  ctx.fillText('הפלגת המשובים', pageCenterX, page.y + 205);
+  ctx.fillText('מצפן המשוב', pageCenterX, page.y + 205);
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(17, true);

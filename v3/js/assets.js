@@ -23,12 +23,13 @@ export function load() {
   const promises = IMAGE_PATHS.map(name =>
     new Promise((resolve, reject) => {
       const img = new Image();
+      const path = name === 'logo' ? '../assets/compass.png' : `../assets/${name}.png`;
       img.onload = () => {
         images[name] = img;
         resolve();
       };
-      img.onerror = () => reject(new Error(`Failed to load ../assets/${name}.png`));
-      img.src = `../assets/${name}.png`;
+      img.onerror = () => reject(new Error(`Failed to load ${path}`));
+      img.src = path;
     })
   );
   return Promise.all(promises);
