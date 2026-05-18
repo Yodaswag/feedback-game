@@ -219,8 +219,8 @@ function setMode(mode) {
 }
 
 function showModeSelectionPrompt() {
-  if (explanationTitle) explanationTitle.textContent = 'הסבר סוגי משוב';
-  if (explanationText) explanationText.textContent = 'בחרו אחד מסוגי המשוב כדי להתחיל, ואז נסו להשלים בכל כרטיס גם אוצר וגם מכשול.';
+  if (explanationTitle) explanationTitle.textContent = 'כאן תוכלו לקרוא הסבר על סוג המשוב שבחרתם';
+  if (explanationText) explanationText.textContent = '';
   for (const m of Object.keys(MODE_META)) {
     const card = document.getElementById(`mode-${m}`);
     if (!card) continue;

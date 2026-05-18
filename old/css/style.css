@@ -40,18 +40,7 @@ canvas {
     animation: spotlightPulse 1.8s ease-in-out infinite;
 }
 
-.mode-spotlight::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    right: 2rem;
-    width: 18px;
-    height: 18px;
-    background: inherit;
-    border-right: 2px solid rgba(214, 158, 46, 0.72);
-    border-bottom: 2px solid rgba(214, 158, 46, 0.72);
-    transform: translateY(-9px) rotate(45deg);
-}
+
 
 .mode-spotlight.hidden {
     display: none;
