@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הפלגת המשובים</title>
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="game-canvas" width="600" height="600"></canvas>
+    <div id="mood-overlay" class="ui-layer hidden">
+      <div class="ui-box screen-center ui-overlay">
+        <h2 id="mood-title" class="title-lg"></h2>
+        <p id="mood-question" class="text-body"></p>
+        <div class="emoji-row">
+          <button class="emoji-btn face-choice" type="button" data-val="5" aria-label="מתרגש מאוד">
+            <img class="face-img" src="../assets/5-very-happy-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="4" aria-label="שמח">
+            <img class="face-img" src="../assets/4-happy-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="3" aria-label="נייטרלי">
+            <img class="face-img" src="../assets/3-neutral-bored-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="2" aria-label="לא בטוח">
+            <img class="face-img" src="../assets/2-slightly-frustrated-pirate.png" alt="">
+          </button>
+          <button class="emoji-btn face-choice" type="button" data-val="1" aria-label="מתוסכל">
+            <img class="face-img" src="../assets/1-frustrated-pirate.png" alt="">
+          </button>
+        </div>
+        <div class="selected-display">בחרת: <span id="mood-selected-display"></span></div>
+        <button id="mood-submit-btn" class="btn btn-blue" disabled>המשך</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
