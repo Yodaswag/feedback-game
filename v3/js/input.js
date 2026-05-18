@@ -2,6 +2,11 @@ const held = new Set();
 
 export function onKeyDown(e) {
   held.add(e.key);
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+    if (e.target && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+    }
+  }
 }
 
 export function onKeyUp(e) {
