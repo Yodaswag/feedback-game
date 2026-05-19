@@ -436,8 +436,8 @@ export function drawStartScreen(ctx, images, layout, hoverTarget) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  ctx.font = FONT(34, true);
-  ctx.fillText('מצפן המשוב', pageCenterX, page.y + 205);
+  ctx.font = "38px 'Aloja', Arial, sans-serif";
+  ctx.fillText('The Feedback Compass', pageCenterX, page.y + 205);
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(17, true);
