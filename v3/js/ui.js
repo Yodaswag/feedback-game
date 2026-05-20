@@ -6,7 +6,7 @@ export function createCanvasLayout(canvasSize) {
     w: Math.max(0, safeCanvasSize - 48),
     h: Math.max(0, safeCanvasSize - 36),
   };
-  const startButtonWidth = Math.max(0, sharedPage.w - 300);
+  const startButtonWidth = Math.min(Math.max(0, sharedPage.w - 300), 170);
   const treasureButtonWidth = Math.max(0, sharedPage.w - 140);
   const supportsLevelCards = sharedPage.w >= 450 && sharedPage.h >= 355;
 

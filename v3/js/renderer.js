@@ -441,13 +441,13 @@ export function drawStartScreen(ctx, images, layout, hoverTarget) {
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(17, true);
-  ctx.textAlign = 'right';
-  ctx.fillText('אספו את הפריט הנכון שלוש פעמים ברצף', page.x + page.w - 56, page.y + 280);
+  ctx.textAlign = 'center';
+  ctx.fillText('אספו את הפריט הנכון שלוש פעמים ברצף', pageCenterX, page.y + 280);
 
   ctx.fillStyle = BLUE_MID;
   ctx.font = FONT(16);
-  ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', page.x + page.w - 56, page.y + 322);
-  ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', page.x + page.w - 56, page.y + 352);
+  ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', pageCenterX, page.y + 322);
+  ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', pageCenterX, page.y + 352);
 
   drawPrimaryButton(ctx, layout.startButton, 'להתחלה', hoverTarget?.id === 'start-button');
 }
