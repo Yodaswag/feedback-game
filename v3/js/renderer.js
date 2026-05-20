@@ -448,7 +448,7 @@ export function drawStartScreen(ctx, images, layout, hoverTarget) {
   ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', pageCenterX, page.y + 322);
   ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', pageCenterX, page.y + 352);
 
-  drawPrimaryButton(ctx, layout.startButton, 'לחץ להתחלה', hoverTarget?.id === 'start-button');
+  drawPrimaryButton(ctx, layout.startButton, 'להתחלה', hoverTarget?.id === 'start-button');
 }
 
 export function drawLevelSelectScreen(ctx, images, state, layout, hoverTarget) {

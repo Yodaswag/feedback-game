@@ -16,7 +16,7 @@ export function createCanvasLayout(canvasSize) {
     sharedPage,
     startButton: toCenterRect({
       x: sharedPage.x + Math.max(0, (sharedPage.w - startButtonWidth) / 2),
-      y: sharedPage.y + Math.max(0, sharedPage.h - 118),
+      y: sharedPage.y + Math.max(0, sharedPage.h - 188),
       w: startButtonWidth,
       h: Math.min(56, sharedPage.h),
     }),
