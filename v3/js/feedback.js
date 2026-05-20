@@ -142,10 +142,10 @@ function drawPopupBody(ctx, text) {
   ctx.save();
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(13, true);
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'top';
   
-  const textX = POPUP_X + 22;
+  const textX = POPUP_X + POPUP_W - 22;
   const textY = POPUP_Y + 84;
   const maxW = POPUP_W - 44;
   
@@ -161,12 +161,12 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
     const testLine = line ? `${line} ${word}` : word;
     const { width } = ctx.measureText(testLine);
     if (width > maxWidth && line) {
-      ctx.fillText(line, x + maxWidth / 2, lineY);
+      ctx.fillText(line, x, lineY);
       line = word;
       lineY += lineHeight;
     } else {
       line = testLine;
     }
   }
-  if (line) ctx.fillText(line, x + maxWidth / 2, lineY);
+  if (line) ctx.fillText(line, x, lineY);
 }

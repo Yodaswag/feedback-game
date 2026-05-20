@@ -441,12 +441,13 @@ export function drawStartScreen(ctx, images, layout, hoverTarget) {
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(17, true);
-  ctx.fillText('אספו את הפריט הנכון שלוש פעמים ברצף', pageCenterX, page.y + 280);
+  ctx.textAlign = 'right';
+  ctx.fillText('אספו את הפריט הנכון שלוש פעמים ברצף', page.x + page.w - 56, page.y + 280);
 
   ctx.fillStyle = BLUE_MID;
   ctx.font = FONT(16);
-  ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', pageCenterX, page.y + 322);
-  ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', pageCenterX, page.y + 352);
+  ctx.fillText('בכל שלב תגלו את החוקיות בעזרת סוגי משוב שונים.', page.x + page.w - 56, page.y + 322);
+  ctx.fillText('שימו לב למה שהמצפן אומר, ובחרו טוב יותר בכל ניסיון.', page.x + page.w - 56, page.y + 352);
 
   drawPrimaryButton(ctx, layout.startButton, 'להתחלה', hoverTarget?.id === 'start-button');
 }
@@ -471,8 +472,9 @@ export function drawLevelSelectScreen(ctx, images, state, layout, hoverTarget) {
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(16, true);
-  ctx.fillText('בכל שלב עליכם לגלות החוקיות הנסתרת ולאסוף פריט נכון 3 פעמים ברצף', pageCenterX, page.y + 108);
-  ctx.fillText('פתחו שלבים בהדרגה, ואז חזרו לאסוף את האוצר.', pageCenterX, page.y + 136);
+  ctx.textAlign = 'right';
+  ctx.fillText('בכל שלב עליכם לגלות החוקיות הנסתרת ולאסוף פריט נכון 3 פעמים ברצף', page.x + page.w - 56, page.y + 108);
+  ctx.fillText('פתחו שלבים בהדרגה, ואז חזרו לאסוף את האוצר.', page.x + page.w - 56, page.y + 136);
 
   const thumbs = [
     { index: 0, label: 'שלב 1: משוב תוצאה', items: ['chest-ribbon', 'chest-plain', 'bomb-lit'], hasLine: false },
@@ -549,19 +551,22 @@ export function drawTreasureWinScreen(ctx, images) {
   ctx.textBaseline = 'middle';
   ctx.fillText('מצאתם את האוצר! 🏆', cx, cardY + 215);
 
+  const rightMarginX = cardX + cardW - 56;
+
   ctx.fillStyle = BLUE_MID;
   ctx.font = FONT(15);
-  ctx.fillText('כל הכבוד! גיליתם את החוקיות בכל 3 הרמות:', cx, cardY + 255);
+  ctx.textAlign = 'right';
+  ctx.fillText('כל הכבוד! גיליתם את החוקיות בכל 3 הרמות:', rightMarginX, cardY + 255);
 
   ctx.fillStyle = '#3c2716';
   ctx.font = FONT(14, true);
-  ctx.fillText('1. משוב תוצאה - רק נכון/לא נכון (הכי פחות מועיל ומבלבל)', cx, cardY + 290);
-  ctx.fillText('2. משוב מתקן - מסביר מה שגוי (עוזר חלקית ומפחית תסכול)', cx, cardY + 320);
-  ctx.fillText('3. משוב בונה - נותן אסטרטגיה מלאה ומסביר למה (הכי מקדם למידה!)', cx, cardY + 350);
+  ctx.fillText('1. משוב תוצאה - רק נכון/לא נכון (הכי פחות מועיל ומבלבל)', rightMarginX, cardY + 290);
+  ctx.fillText('2. משוב מתקן - מסביר מה שגוי (עוזר חלקית ומפחית תסכול)', rightMarginX, cardY + 320);
+  ctx.fillText('3. משוב בונה - נותן אסטרטגיה מלאה ומסביר למה (הכי מקדם למידה!)', rightMarginX, cardY + 350);
 
   ctx.fillStyle = BLUE_DARK;
   ctx.font = FONT(15, true);
-  ctx.fillText('כעת אתם מבינים את הכוח של משוב בונה בעיצוב למידה!', cx, cardY + 410);
+  ctx.fillText('כעת אתם מבינים את הכוח של משוב בונה בעיצוב למידה!', rightMarginX, cardY + 410);
 
   // Play Again Button inside card
   const btnW = 180;
