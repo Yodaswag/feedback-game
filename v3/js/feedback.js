@@ -145,9 +145,9 @@ function drawPopupBody(ctx, text) {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'top';
   
-  const textX = POPUP_X + POPUP_W - 22;
+  const textX = POPUP_X + POPUP_W - 32;
   const textY = POPUP_Y + 84;
-  const maxW = POPUP_W - 44;
+  const maxW = POPUP_W - 64;
   
   drawWrappedText(ctx, text, textX, textY, maxW, 20);
   ctx.restore();

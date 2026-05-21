@@ -77,8 +77,8 @@ export function drawRevealScreen(ctx, images, level) {
   activeButtons = [];
 
   const px = 50, pw = CANVAS_SIZE - 100;
-  // Inset 14% from each horizontal edge of the page image — keeps text on visible paper
-  const hInset = Math.round(pw * 0.14);
+  // Inset 18% from each horizontal edge of the page image — keeps text on visible paper with generous padding
+  const hInset = Math.round(pw * 0.18);
   const textMaxW = pw - hInset * 2;
   const textCX = px + pw / 2; // center x of page (= CANVAS_SIZE/2)
 
@@ -110,19 +110,22 @@ export function drawRevealScreen(ctx, images, level) {
   }
 
   let lineY = py + vInsetTop;
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+  const textRX = px + pw - hInset; // Right edge coordinate
   for (const line of lines) {
     if (line.trim() === '') { lineY += 10; continue; }
     const isHeader = /^[^ -]/.test(line) && line.length < 40;
     if (isHeader) {
+      ctx.textAlign = 'center';
       ctx.fillStyle = BLUE_DARK;
       ctx.font = FONT(17, true);
+      lineY = wrapText(ctx, line, textCX, lineY, textMaxW, 21);
     } else {
+      ctx.textAlign = 'right';
       ctx.fillStyle = BLUE_MID;
       ctx.font = FONT(14);
+      lineY = wrapText(ctx, line, textRX, lineY, textMaxW, 21);
     }
-    lineY = wrapText(ctx, line, textCX, lineY, textMaxW, 21);
   }
 
   const ruleY = py + ph - vInsetBot - 105;
@@ -132,7 +135,8 @@ export function drawRevealScreen(ctx, images, level) {
   ctx.fillText('הכלל שהיה בשלב זה:', textCX, ruleY);
   ctx.font = FONT(12);
   ctx.fillStyle = BLUE_MID;
-  wrapText(ctx, level.transitionReveal, textCX, ruleY + 18, textMaxW, 18);
+  ctx.textAlign = 'right';
+  wrapText(ctx, level.transitionReveal, textRX, ruleY + 18, textMaxW, 18);
 
   drawButton(ctx, 'המשך ←', textCX - 75, py + ph - vInsetBot - 44, 140, 40, true);
 }

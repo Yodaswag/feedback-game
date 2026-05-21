@@ -24,17 +24,24 @@ export function drawPopup(ctx, images, popup) {
   }
 
   // Correct/wrong symbol
+  ctx.save();
   ctx.fillStyle = isCorrect ? '#1a7a3f' : '#8b1a1a';
   ctx.font = FONT(24, true);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(isCorrect ? '✓' : '✗', POPUP_X + POPUP_W / 2, POPUP_Y + 16);
+  ctx.restore();
 
-  // Always show text
+  // Always show text (right aligned with 32px padding)
+  ctx.save();
   ctx.fillStyle = BLUE_DARK;
-  ctx.font = FONT(15, true);
+  ctx.font = FONT(13, true);
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'top';
-  drawWrappedText(ctx, text, POPUP_X + 20, POPUP_Y + 52, POPUP_W - 40, 24);
+  const textX = POPUP_X + POPUP_W - 32;
+  const maxW = POPUP_W - 64;
+  drawWrappedText(ctx, text, textX, POPUP_Y + 52, maxW, 20);
+  ctx.restore();
 }
 
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -45,12 +52,12 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
     const testLine = line ? `${line} ${word}` : word;
     const { width } = ctx.measureText(testLine);
     if (width > maxWidth && line) {
-      ctx.fillText(line, x + maxWidth / 2, lineY);
+      ctx.fillText(line, x, lineY);
       line = word;
       lineY += lineHeight;
     } else {
       line = testLine;
     }
   }
-  if (line) ctx.fillText(line, x + maxWidth / 2, lineY);
+  if (line) ctx.fillText(line, x, lineY);
 }
